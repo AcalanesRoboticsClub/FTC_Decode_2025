@@ -63,15 +63,18 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
 @TeleOp
 public class omniTeleOP extends LinearOpMode{
-    DcMotor frontLeftMotor;
-    DcMotor backLeftMotor;
-    DcMotor frontRightMotor;
-    DcMotor backRightMotor;
-    CRServo bottomBelt;
-    CRServo angledBelt;
-    CRServo intakeLeft;
-    CRServo intakeRight;
-    DcMotor flywheelMotor;
+    DcMotor frontLeftMotor; // 1
+    DcMotor backLeftMotor; // 0
+    DcMotor frontRightMotor; // 1 (expansion)
+    DcMotor backRightMotor; // 0 (expansion)
+    CRServo intakeLeft; // 1
+    CRServo intakeRight; // 0 (expansion)
+    CRServo beltLeft; // 0
+    CRServo beltRight; // 1 (expansion)
+    CRServo beltVertical; // 2
+//    CRServo turret; // 2 (expansion)
+    DcMotor flywheelRotateMotor; // 2 (expansion)
+    DcMotor flywheelMotor; // 3 (expansion)
     // CRServo clawIntake;
     IMU imu;
     DistanceSensor rightDistanceSensor;
@@ -125,15 +128,21 @@ public class omniTeleOP extends LinearOpMode{
         // leftHang = hardwareMap.get(Servo.class, "leftHangServo");
 
         // Game Element Intake
-//        intakeLeft = hardwareMap.get(CRServo.class, "intakeLeft");
-//        intakeRight = hardwareMap.get(CRServo.class, "intakeRight");
+        intakeLeft = hardwareMap.get(CRServo.class, "intakeLeft");
+        intakeRight = hardwareMap.get(CRServo.class, "intakeRight");
 
         // Belts to connect intake and flywheel
-//        bottomBelt = hardwareMap.get(CRServo.class, "bottomBelt");
-//        angledBelt = hardwareMap.get(CRServo.class, "angledBelt");
+        beltLeft = hardwareMap.get(CRServo.class, "beltLeft");
+        beltRight = hardwareMap.get(CRServo.class, "beltRight");
+        beltVertical = hardwareMap.get(CRServo.class, "beltVertical");
 
-        // Flywheel Motor
-//        flywheelMotor = hardwareMap.dcMotor.get("flywheelMotor");
+        // Reverse some belts
+        intakeLeft.setDirection(CRServo.Direction.REVERSE);
+        beltLeft.setDirection(CRServo.Direction.REVERSE);
+
+        // Flywheel Motor and Rotation
+        flywheelRotateMotor = hardwareMap.dcMotor.get("rotatShot");
+        flywheelMotor = hardwareMap.dcMotor.get("flywheelMotor");
 
         // Reverse some of the drive motors depending on physical setup
         frontLeftMotor.setDirection(DcMotorSimple.Direction.REVERSE);
@@ -262,42 +271,48 @@ public class omniTeleOP extends LinearOpMode{
             }*/
 
             // Controller 1 Intake
-            /*if (gamepad1.right_bumper) {
+            if (gamepad1.a) {
                 intakeLeft.setPower(1);
-                intakeRight.setPower(-1);
-            } else if (gamepad1.left_bumper) {
-                intakeLeft.setPower(-1);
                 intakeRight.setPower(1);
+                beltLeft.setPower(1);
+                beltRight.setPower(1);
+                beltVertical.setPower(-1);
+            }
+            else if (gamepad2.a) {
+                intakeLeft.setPower(-1);
+                intakeRight.setPower(-1);
+                beltLeft.setPower(-1);
+                beltRight.setPower(-1);
+                beltVertical.setPower(1);
             }
             else {
                 intakeLeft.setPower(0);
                 intakeRight.setPower(0);
-            }
-
-            // Controller 2 Belts
-            if (gamepad2.right_bumper) {
-                bottomBelt.setPower(1);
-                angledBelt.setPower(1);
-            }
-            else if (gamepad2.left_bumper) {
-                bottomBelt.setPower(-1);
-                angledBelt.setPower(-1);
-            }
-            else {
-                bottomBelt.setPower(0);
-                angledBelt.setPower(0);
+                beltLeft.setPower(0);
+                beltRight.setPower(0);
+                beltVertical.setPower(0);
             }
 
             // Controller 2 Flywheel
-            if (gamepad2.a) {
-                flywheelMotor.setPower(10);
+            if (gamepad1.left_trigger > 0.1) {
+                flywheelRotateMotor.setPower(gamepad1.left_trigger * 0.85);
             }
-            if (gamepad2.b) {
-                flywheelMotor.setPower(-10);
+            else if (gamepad1.right_trigger > 0.1) {
+                flywheelRotateMotor.setPower(gamepad1.right_trigger * -0.85);
+            }
+            else {
+                flywheelRotateMotor.setPower(0);
+            }
+
+            if (gamepad1.x) {
+                flywheelMotor.setPower(1);
+            }
+            if (gamepad2.x) {
+                flywheelMotor.setPower(-1);
             }
             else {
                 flywheelMotor.setPower(0);
-            }*/
+            }
 
             // Controller 1 Arm Slide
             // encoder directions become negative depending on motor directions
@@ -340,6 +355,7 @@ public class omniTeleOP extends LinearOpMode{
 
 //            telemetry.addData("Right Distance (mm): ", rightDistanceSensor.getDistance(DistanceUnit.MM));
 //            telemetry.addData("Back Distance (mm): ", backDistanceSensor.getDistance(DistanceUnit.MM));
+            telemetry.addData("rmp flywheel: ", flywheelMotor.getPower());
             telemetry.update();
         }
     }

@@ -62,8 +62,12 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
 @TeleOp
-public class ShooterTestOp extends LinearOpMode{
-    DcMotor flywheelMotor;
+public class testDriveOP extends LinearOpMode{
+    DcMotor frontLeftMotor; // 1
+    DcMotor backLeftMotor; // 0
+    DcMotor frontRightMotor; // 1 (expansion)
+    DcMotor backRightMotor; // 0 (expansion)
+
     // CRServo clawIntake;
     IMU imu;
     DistanceSensor rightDistanceSensor;
@@ -90,10 +94,16 @@ public class ShooterTestOp extends LinearOpMode{
 
     @Override
     public void runOpMode() throws InterruptedException {
-        // armPivotMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);  // Reset the motor encoder so that it reads zero ticks
+        // Hardware Definitions. Must match names setup in robot configuration in the driver hub. config is created and selected selected with driver hub menu
+        // Drive Motors
+        frontLeftMotor = hardwareMap.dcMotor.get("frontLeftMotor");
+        backLeftMotor = hardwareMap.dcMotor.get("backLeftMotor");
+        frontRightMotor = hardwareMap.dcMotor.get("frontRightMotor");
+        backRightMotor = hardwareMap.dcMotor.get("backRightMotor");
 
-        // Flywheel Motor
-        flywheelMotor = hardwareMap.dcMotor.get("flywheelMotor");
+        // Reverse some of the drive motors depending on physical setup
+        frontLeftMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+        backLeftMotor.setDirection(DcMotorSimple.Direction.REVERSE);
 
         // Retrieve the IMU from the hardware map
         imu = hardwareMap.get(IMU.class, "imu");
@@ -119,6 +129,10 @@ public class ShooterTestOp extends LinearOpMode{
 
         while (opModeIsActive()) {
 
+            // Take whichever value is the most drastic change to use from either controller
+            double y = calcLargestChange(-gamepad1.left_stick_y, -gamepad2.left_stick_y); // Y stick values are reported as inverted by the controller
+            double x = calcLargestChange(gamepad1.left_stick_x, gamepad2.left_stick_x);
+            double rx = calcLargestChange(gamepad1.right_stick_x, gamepad2.right_stick_x);
 
             // This button choice was made so that it is hard to hit on accident,
             // it can be freely changed based on preference.
@@ -127,14 +141,72 @@ public class ShooterTestOp extends LinearOpMode{
                 imu.initialize(parameters);
                 imu.resetYaw();
             }
+            // if (gamepad1.back) {
+            // armSlideMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);  // Reset the motor encoder so that it reads zero ticks
+            // }
+
+            double botHeading = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
+
+            // Rotate the movement direction counter to the bot's rotation
+            double rotX = x * Math.cos(-botHeading) - y * Math.sin(-botHeading);
+            double rotY = x * Math.sin(-botHeading) + y * Math.cos(-botHeading);
+
+            rotX = rotX * 1.1;  // Counteract imperfect strafing
+
+            // Denominator is the largest motor power (absolute value) or 1
+            // This ensures all the powers maintain the same ratio,
+            // but only if at least one is out of the range [-1, 1]
+            double denominator = Math.max(Math.abs(rotY) + Math.abs(rotX) + Math.abs(rx), 1);
+//            double frontLeftPower = (rotY + rotX + rx) / denominator;
+//            double backLeftPower = (rotY - rotX + rx) / denominator;
+//            double frontRightPower = (rotY - rotX - rx) / denominator;
+//            double backRightPower = (rotY + rotX - rx) / denominator;
+            double frontLeftPower = (y + x + rx);
+            double frontRightPower = (y - x - rx);
+            double backLeftPower = (y - x + rx);
+            double backRightPower = (y + x - rx);
+
+            double max = Math.max(Math.abs(frontLeftPower), Math.abs(frontRightPower));
+            max = Math.max(max, Math.abs(backLeftPower));
+            max = Math.max(max, Math.abs(backRightPower));
+
+            if (max > 1.0) {
+                frontLeftPower  /= max;
+                frontRightPower /= max;
+                backLeftPower   /= max;
+                backRightPower  /= max;
+            }
 
             if (gamepad1.a) {
-                flywheelMotor.setPower(6000);
-                telemetry.addData("FLywheel: ", flywheelMotor.getPower());
+                frontLeftMotor.setPower(1);
             }
             else {
-                flywheelMotor.setPower(0);
+                frontLeftMotor.setPower(0);
             }
+            if (gamepad1.y) {
+                backLeftMotor.setPower(1);
+            }
+            else {
+                backLeftMotor.setPower(0);
+            }
+            if (gamepad1.x) {
+                frontRightMotor.setPower(1);
+            }
+            else {
+                frontRightMotor.setPower(0);
+            }
+            if (gamepad1.b) {
+                backRightMotor.setPower(1);
+            }
+            else {
+                backRightMotor.setPower(0);
+            }
+
+            telemetry.addData("vals", "%4.2f, %4.2f, %4.2f", y, x, rx);
+            telemetry.addData("Front left/Right", "%4.2f, %4.2f", frontLeftPower, frontRightPower);
+            telemetry.addData("Back  left/Right", "%4.2f, %4.2f", backLeftPower, backRightPower);
+
+
             telemetry.update();
         }
     }
