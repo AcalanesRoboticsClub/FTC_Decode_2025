@@ -157,7 +157,6 @@ public class omniTeleOP extends LinearOpMode{
         if (isStopRequested()) return;
 
         while (opModeIsActive()) {
-
             // Take whichever value is the most drastic change to use from either controller
             double y = calcLargestChange(-gamepad1.left_stick_y, -gamepad2.left_stick_y); // Y stick values are reported as inverted by the controller
             double x = calcLargestChange(gamepad1.left_stick_x, gamepad2.left_stick_x);
@@ -170,9 +169,6 @@ public class omniTeleOP extends LinearOpMode{
                 imu.initialize(parameters);
                 imu.resetYaw();
             }
-            // if (gamepad1.back) {
-                // armSlideMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);  // Reset the motor encoder so that it reads zero ticks
-            // }
 
             double botHeading = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
 
@@ -186,14 +182,15 @@ public class omniTeleOP extends LinearOpMode{
             // This ensures all the powers maintain the same ratio,
             // but only if at least one is out of the range [-1, 1]
             double denominator = Math.max(Math.abs(rotY) + Math.abs(rotX) + Math.abs(rx), 1);
-//            double frontLeftPower = (rotY + rotX + rx) / denominator;
-//            double backLeftPower = (rotY - rotX + rx) / denominator;
-//            double frontRightPower = (rotY - rotX - rx) / denominator;
-//            double backRightPower = (rotY + rotX - rx) / denominator;
-            double frontLeftPower = (y + x + rx);
-            double frontRightPower = (y - x - rx);
-            double backLeftPower = (y - x + rx);
-            double backRightPower = (y + x - rx);
+
+            double frontLeftPower = (rotY + rotX + rx) / denominator;
+            double backLeftPower = (rotY - rotX + rx) / denominator;
+            double frontRightPower = (rotY - rotX - rx) / denominator;
+            double backRightPower = (rotY + rotX - rx) / denominator;
+//            double frontLeftPower = (y + x + rx);
+//            double frontRightPower = (y - x - rx);
+//            double backLeftPower = (y - x + rx);
+//            double backRightPower = (y + x - rx);
 
             double max = Math.max(Math.abs(frontLeftPower), Math.abs(frontRightPower));
             max = Math.max(max, Math.abs(backLeftPower));
@@ -316,7 +313,7 @@ public class omniTeleOP extends LinearOpMode{
                 angle = 0.3;
             }
             if (gamepad1.y) {
-                angle = 0.35;
+                angle = 0.335;
             }
             // between 0 and 0.4
             flywheelAngle.setPosition(angle);
