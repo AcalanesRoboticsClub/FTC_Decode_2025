@@ -63,6 +63,9 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
 @TeleOp
 public class omniTeleOP extends LinearOpMode{
+    int FLYWHEEL_ROTATE_MAX = 600;
+    int FLYWHEEL_ROTATE_MIN = -1250;
+    boolean intakeToggleOn = true;
     DcMotor frontLeftMotor; // 1
     DcMotor backLeftMotor; // 0
     DcMotor frontRightMotor; // 1 (expansion)
@@ -126,6 +129,8 @@ public class omniTeleOP extends LinearOpMode{
 
         // Flywheel Motor and Rotation
         flywheelRotateMotor = hardwareMap.dcMotor.get("rotatShot");
+        flywheelRotateMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        flywheelRotateMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         flywheelMotor = hardwareMap.dcMotor.get("flywheelMotor");
         flywheelIntake = hardwareMap.dcMotor.get("flywheelIntake");
         flywheelAngle = hardwareMap.get(Servo.class, "flywheelAngle");
@@ -138,8 +143,8 @@ public class omniTeleOP extends LinearOpMode{
         imu = hardwareMap.get(IMU.class, "imu");
         // Adjust the orientation parameters to match your robot <------------------------------------------------------- IMPORTANT
         IMU.Parameters parameters = new IMU.Parameters(new RevHubOrientationOnRobot(
-                RevHubOrientationOnRobot.LogoFacingDirection.FORWARD,
-                RevHubOrientationOnRobot.UsbFacingDirection.RIGHT));
+                RevHubOrientationOnRobot.LogoFacingDirection.LEFT,
+                RevHubOrientationOnRobot.UsbFacingDirection.UP));
         // Without this, the REV Hub's orientation is assumed to be logo up / USB forward
         imu.initialize(parameters);
 
@@ -254,19 +259,25 @@ public class omniTeleOP extends LinearOpMode{
             }*/
 
             // Controller 1 Intake
-            if (gamepad1.a) {
+            if (gamepad1.aWasPressed()) {
+                if (intakeToggleOn) { intakeToggleOn = false; }
+                else { intakeToggleOn = true; }
+            }
+
+            if (intakeToggleOn) {
                 intakeLeft.setPower(1);
                 intakeRight.setPower(1);
                 beltLeft.setPower(1);
                 beltRight.setPower(1);
                 beltVertical.setPower(-1);
             }
-            else if (gamepad2.a) {
+            else if (gamepad1.back) { // reverse all intake + flywheel intake in emergency
                 intakeLeft.setPower(-1);
                 intakeRight.setPower(-1);
                 beltLeft.setPower(-1);
                 beltRight.setPower(-1);
                 beltVertical.setPower(1);
+                flywheelIntake.setPower(-1);
             }
             else {
                 intakeLeft.setPower(0);
@@ -277,15 +288,16 @@ public class omniTeleOP extends LinearOpMode{
             }
 
             // Controller 2 Flywheel
-            if (gamepad1.left_trigger > 0.1) {
+            if (gamepad1.left_trigger > 0.1 && flywheelRotateMotor.getCurrentPosition() < FLYWHEEL_ROTATE_MAX) {
                 flywheelRotateMotor.setPower(gamepad1.left_trigger * 0.85);
             }
-            else if (gamepad1.right_trigger > 0.1) {
+            else if (gamepad1.right_trigger > 0.1 && flywheelRotateMotor.getCurrentPosition() > FLYWHEEL_ROTATE_MIN) {
                 flywheelRotateMotor.setPower(gamepad1.right_trigger * -0.85);
             }
             else {
                 flywheelRotateMotor.setPower(0);
             }
+            telemetry.addData("flywheel rotate: ", flywheelRotateMotor.getCurrentPosition());
 
             if (gamepad1.x) {
                 flywheelMotor.setPower(1);
@@ -306,10 +318,10 @@ public class omniTeleOP extends LinearOpMode{
             if (gamepad1.dpad_left) {
                 angle = 0.1;
             }
-            if (gamepad1.dpad_right) {
+            if (gamepad1.dpad_down) {
                 angle = 0.2;
             }
-            if (gamepad1.dpad_down) {
+            if (gamepad1.dpad_right) {
                 angle = 0.3;
             }
             if (gamepad1.y) {
