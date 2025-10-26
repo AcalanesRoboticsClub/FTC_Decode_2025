@@ -316,7 +316,7 @@ public class omniTeleOP extends LinearOpMode{
                 angle = 0.3;
             }
             if (gamepad1.y) {
-                angle = 0.4;
+                angle = 0.35;
             }
             // between 0 and 0.4
             flywheelAngle.setPosition(angle);
