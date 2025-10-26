@@ -74,11 +74,14 @@ public class omniTeleOP extends LinearOpMode{
     CRServo beltVertical; // 2
 //    CRServo turret; // 2 (expansion)
     DcMotor flywheelRotateMotor; // 2 (expansion)
-    DcMotor flywheelMotor; // 3 (expansion)
+    DcMotor flywheelMotor; // 2
+    DcMotor flywheelIntake; // 3
+    Servo flywheelAngle; // 2 (expansion)
     // CRServo clawIntake;
     IMU imu;
     DistanceSensor rightDistanceSensor;
     DistanceSensor backDistanceSensor;
+    double angle;
 
     private double calcLargestChange(double a, double b) {
         // Return the value of the greatest absolute value of either a or b. Used for dual controller input
@@ -108,25 +111,6 @@ public class omniTeleOP extends LinearOpMode{
         frontRightMotor = hardwareMap.dcMotor.get("frontRightMotor");
         backRightMotor = hardwareMap.dcMotor.get("backRightMotor");
 
-        // Arm Pivot Motor
-        // Encoder of ~2500 is vertical
-        // armPivotMotor = hardwareMap.dcMotor.get("armPivotMotor");
-        // armPivotMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);  // Reset the motor encoder so that it reads zero ticks
-        // int armPivotDesiredPos = 400; // position the arm pivot will assume when the program is run, until a different position is commanded
-
-        // Arm Slide Motor
-        // Encoder of |2130| is fully extended
-        // armSlideMotor = hardwareMap.dcMotor.get("armSlideMotor");
-        // armSlideMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);  // Reset the motor encoder so that it reads zero ticks
-        // int armSlideDesiredPos = 0;
-        // boolean armSlideLastMoveDirection = false; // false = retract, true = extend, starting is equivalent to having just retracted
-        // double armSlideHoldingPower = 0.5; // Power to hold slide in place, 0.5 to prevent overheating, can be set to 1 for hangs
-        // int armSlideSoftLimit = 2000;
-
-        // Hanging Claws
-        // rightHang = hardwareMap.get(Servo.class, "rightHangServo");
-        // leftHang = hardwareMap.get(Servo.class, "leftHangServo");
-
         // Game Element Intake
         intakeLeft = hardwareMap.get(CRServo.class, "intakeLeft");
         intakeRight = hardwareMap.get(CRServo.class, "intakeRight");
@@ -143,6 +127,8 @@ public class omniTeleOP extends LinearOpMode{
         // Flywheel Motor and Rotation
         flywheelRotateMotor = hardwareMap.dcMotor.get("rotatShot");
         flywheelMotor = hardwareMap.dcMotor.get("flywheelMotor");
+        flywheelIntake = hardwareMap.dcMotor.get("flywheelIntake");
+        flywheelAngle = hardwareMap.get(Servo.class, "flywheelAngle");
 
         // Reverse some of the drive motors depending on physical setup
         frontLeftMotor.setDirection(DcMotorSimple.Direction.REVERSE);
@@ -306,13 +292,35 @@ public class omniTeleOP extends LinearOpMode{
 
             if (gamepad1.x) {
                 flywheelMotor.setPower(1);
+                flywheelIntake.setPower(1);
             }
-            if (gamepad2.x) {
+            else if (gamepad2.x) {
                 flywheelMotor.setPower(-1);
+                flywheelIntake.setPower(-1);
             }
             else {
                 flywheelMotor.setPower(0);
+                flywheelIntake.setPower(0);
             }
+
+            if (gamepad1.dpad_up) {
+                angle = 0;
+            }
+            if (gamepad1.dpad_left) {
+                angle = 0.1;
+            }
+            if (gamepad1.dpad_right) {
+                angle = 0.2;
+            }
+            if (gamepad1.dpad_down) {
+                angle = 0.3;
+            }
+            if (gamepad1.y) {
+                angle = 0.4;
+            }
+            // between 0 and 0.4
+            flywheelAngle.setPosition(angle);
+            telemetry.addData("flywheel position: ", flywheelAngle.getPosition());
 
             // Controller 1 Arm Slide
             // encoder directions become negative depending on motor directions
