@@ -61,11 +61,24 @@ import com.qualcomm.robotcore.hardware.Servo;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
+/*
+DRIVER SCHEMA:
+- Driver 1
+    chassis driver
+    flywheel rotation
+- Driver 2
+    flywheel shooting and presets
+    intake
+*/
+
 @TeleOp
 public class omniTeleOP extends LinearOpMode{
     int FLYWHEEL_ROTATE_MAX = 600;
     int FLYWHEEL_ROTATE_MIN = -1250;
-    boolean intakeToggleOn = true;
+    double SLOWER_SPEED_MULTIPLIER = 0.77;
+    boolean intakeToggle = false;
+    boolean toggleSlowerShoot = false;
+    double flywheelSpeedMultiplier = 1.0;
     DcMotor frontLeftMotor; // 1
     DcMotor backLeftMotor; // 0
     DcMotor frontRightMotor; // 1 (expansion)
@@ -138,6 +151,7 @@ public class omniTeleOP extends LinearOpMode{
         // Reverse some of the drive motors depending on physical setup
         frontLeftMotor.setDirection(DcMotorSimple.Direction.REVERSE);
         backLeftMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+//        flywheelMotor.setDirection(DcMotorSimple.Direction.REVERSE);
 
         // Retrieve the IMU from the hardware map
         imu = hardwareMap.get(IMU.class, "imu");
@@ -259,19 +273,19 @@ public class omniTeleOP extends LinearOpMode{
             }*/
 
             // Controller 1 Intake
-            if (gamepad1.aWasPressed()) {
-                if (intakeToggleOn) { intakeToggleOn = false; }
-                else { intakeToggleOn = true; }
+            if (gamepad1.aWasPressed() || gamepad2.aWasPressed()) {
+                if (intakeToggle) { intakeToggle = false; }
+                else { intakeToggle = true; }
             }
 
-            if (intakeToggleOn) {
+            if (intakeToggle) {
                 intakeLeft.setPower(1);
                 intakeRight.setPower(1);
                 beltLeft.setPower(1);
                 beltRight.setPower(1);
                 beltVertical.setPower(-1);
             }
-            else if (gamepad1.back) { // reverse all intake + flywheel intake in emergency
+            else if (gamepad1.back || gamepad2.back) { // reverse all intake + flywheel intake in emergency
                 intakeLeft.setPower(-1);
                 intakeRight.setPower(-1);
                 beltLeft.setPower(-1);
@@ -287,11 +301,11 @@ public class omniTeleOP extends LinearOpMode{
                 beltVertical.setPower(0);
             }
 
-            // Controller 2 Flywheel
-            if (gamepad1.left_trigger > 0.1 && flywheelRotateMotor.getCurrentPosition() < FLYWHEEL_ROTATE_MAX) {
+            // Flywheel
+            if ((gamepad1.left_trigger > 0.1 || gamepad2.left_trigger > 0.1) && flywheelRotateMotor.getCurrentPosition() < FLYWHEEL_ROTATE_MAX) {
                 flywheelRotateMotor.setPower(gamepad1.left_trigger * 0.85);
             }
-            else if (gamepad1.right_trigger > 0.1 && flywheelRotateMotor.getCurrentPosition() > FLYWHEEL_ROTATE_MIN) {
+            else if ((gamepad1.right_trigger > 0.1 || gamepad2.right_trigger > 0.1) && flywheelRotateMotor.getCurrentPosition() > FLYWHEEL_ROTATE_MIN) {
                 flywheelRotateMotor.setPower(gamepad1.right_trigger * -0.85);
             }
             else {
@@ -299,35 +313,44 @@ public class omniTeleOP extends LinearOpMode{
             }
             telemetry.addData("flywheel rotate: ", flywheelRotateMotor.getCurrentPosition());
 
-            if (gamepad1.x) {
-                flywheelMotor.setPower(1);
-                flywheelIntake.setPower(1);
+            if (toggleSlowerShoot) {
+                flywheelSpeedMultiplier = SLOWER_SPEED_MULTIPLIER;
             }
-            else if (gamepad2.x) {
-                flywheelMotor.setPower(-1);
-                flywheelIntake.setPower(-1);
+            else {
+                flywheelSpeedMultiplier = 1;
+            }
+
+            if (gamepad1.right_bumper || gamepad2.right_bumper) {
+                flywheelMotor.setPower(1 * flywheelSpeedMultiplier);
             }
             else {
                 flywheelMotor.setPower(0);
+            }
+
+            if (gamepad1.left_bumper || gamepad2.left_bumper) {
+                flywheelIntake.setPower(1);
+            }
+            else {
                 flywheelIntake.setPower(0);
             }
 
-            if (gamepad1.dpad_up) {
+            if (gamepad1.dpad_up || gamepad2.dpad_up) { // CLOSEST (touching wall)
                 angle = 0;
+                toggleSlowerShoot = true;
             }
-            if (gamepad1.dpad_left) {
-                angle = 0.1;
-            }
-            if (gamepad1.dpad_down) {
-                angle = 0.2;
-            }
-            if (gamepad1.dpad_right) {
+            if (gamepad1.dpad_left || gamepad2.dpad_left) { // CLOSE (centered on closer triangle)
                 angle = 0.3;
+                toggleSlowerShoot = false;
             }
-            if (gamepad1.y) {
-                angle = 0.335;
+            if (gamepad1.dpad_down || gamepad2.dpad_down) { // FAR (centered on top of triangle)
+                angle = 0.25;
+                toggleSlowerShoot = false;
             }
-            // between 0 and 0.4
+            if (gamepad1.dpad_right || gamepad2.dpad_right) { // CLOSE (other setting)
+                angle = 0.28;
+                toggleSlowerShoot = false;
+            }
+            // angle is between 0 and 0.4
             flywheelAngle.setPosition(angle);
             telemetry.addData("flywheel position: ", flywheelAngle.getPosition());
 
