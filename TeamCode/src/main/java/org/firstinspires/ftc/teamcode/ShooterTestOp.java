@@ -64,10 +64,12 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 @TeleOp
 public class ShooterTestOp extends LinearOpMode{
     DcMotor flywheelMotor;
+    Servo flywheelAngle; // 2 (expansion)
     // CRServo clawIntake;
     IMU imu;
     DistanceSensor rightDistanceSensor;
     DistanceSensor backDistanceSensor;
+    double angle = 0;
 
     private double calcLargestChange(double a, double b) {
         // Return the value of the greatest absolute value of either a or b. Used for dual controller input
@@ -94,6 +96,7 @@ public class ShooterTestOp extends LinearOpMode{
 
         // Flywheel Motor
         flywheelMotor = hardwareMap.dcMotor.get("flywheelMotor");
+        flywheelAngle = hardwareMap.get(Servo.class, "flywheelAngle");
 
         // Retrieve the IMU from the hardware map
         imu = hardwareMap.get(IMU.class, "imu");
@@ -127,6 +130,26 @@ public class ShooterTestOp extends LinearOpMode{
                 imu.initialize(parameters);
                 imu.resetYaw();
             }
+
+            if (gamepad1.dpad_up) {
+                angle = 0;
+            }
+            if (gamepad1.dpad_left) {
+                angle = 0.1;
+            }
+            if (gamepad1.dpad_right) {
+                angle = 0.2;
+            }
+            if (gamepad1.dpad_down) {
+                angle = 0.3;
+            }
+            if (gamepad1.y) {
+                angle = 0.4;
+            }
+            // between 0 and 0.4
+            flywheelAngle.setPosition(angle);
+            telemetry.addData("flywheel position: ", flywheelAngle.getPosition());
+
 
             if (gamepad1.a) {
                 flywheelMotor.setPower(6000);
