@@ -80,9 +80,9 @@ DRIVER SCHEMA:
 
 @TeleOp
 public class omniTeleOP extends LinearOpMode{
-    int FLYWHEEL_ROTATE_MAX = 1350;//1
+    int FLYWHEEL_ROTATE_MAX = 1350;
     int FLYWHEEL_ROTATE_MIN = -2150;
-    double SLOWER_SPEED_MULTIPLIER = 0.77;
+    double SLOWER_SPEED_MULTIPLIER = 0.79;
     boolean intakeToggle = false;
     boolean toggleSlowerShoot = false;
     double flywheelSpeedMultiplier = 1.0;
@@ -170,6 +170,7 @@ public class omniTeleOP extends LinearOpMode{
             flywheelRotateMotor = hardwareMap.dcMotor.get("rotatShot");
             flywheelRotateMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
             flywheelRotateMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+            flywheelRotateMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
             flywheelMotor = hardwareMap.dcMotor.get("flywheelMotor");
             flywheelIntake = hardwareMap.dcMotor.get("flywheelIntake");
             flywheelAngle = hardwareMap.get(Servo.class, "flywheelAngle");
@@ -329,15 +330,6 @@ public class omniTeleOP extends LinearOpMode{
                 }
 
                 // Flywheel
-                if ((gamepad1.left_trigger > 0.1 || gamepad2.left_trigger > 0.1) && flywheelRotateMotor.getCurrentPosition() < FLYWHEEL_ROTATE_MAX) {
-                    flywheelRotateMotor.setPower(gamepad1.left_trigger * 0.85);
-                } else if ((gamepad1.right_trigger > 0.1 || gamepad2.right_trigger > 0.1) && flywheelRotateMotor.getCurrentPosition() > FLYWHEEL_ROTATE_MIN) {
-                    flywheelRotateMotor.setPower(gamepad1.right_trigger * -0.85);
-                } else {
-                    flywheelRotateMotor.setPower(0);
-                }
-                telemetry.addData("flywheel rotate: ", flywheelRotateMotor.getCurrentPosition());
-
                 if (toggleSlowerShoot) {
                     flywheelSpeedMultiplier = SLOWER_SPEED_MULTIPLIER;
                 } else {
@@ -369,7 +361,7 @@ public class omniTeleOP extends LinearOpMode{
                     toggleSlowerShoot = false;
                 }
                 if (gamepad1.dpad_right || gamepad2.dpad_right) { // CLOSE (other setting)
-                    angle = 0.28;
+                    angle = 0.34;
                     toggleSlowerShoot = false;
                 }
                 // angle is between 0 and 0.4
@@ -378,7 +370,11 @@ public class omniTeleOP extends LinearOpMode{
 
                 // FLYWHEEL AUTO-AIMING
                 telemetry.addData("data", tagProcessor.getDetections());
-                if (tagProcessor.getDetections().size() > 0 && (gamepad1.b || gamepad2.b)) {
+                if (!tagProcessor.getDetections().isEmpty()) {
+                    AprilTagDetection tag = tagProcessor.getDetections().get(0);
+                    telemetry.addData("yaw", tag.ftcPose.yaw);
+                }
+                if (!tagProcessor.getDetections().isEmpty() && (gamepad1.b || gamepad2.b)) {
                     AprilTagDetection tag = tagProcessor.getDetections().get(0);
                     telemetry.addData("id", tag.id);
                     if (tag.id == 20 || tag.id == 19) {
@@ -389,14 +385,41 @@ public class omniTeleOP extends LinearOpMode{
                         telemetry.addData("pitch", tag.ftcPose.pitch);
                         telemetry.addData("yaw", tag.ftcPose.yaw);
 
-                        if (tag.ftcPose.yaw > 2.5 && flywheelRotateMotor.getCurrentPosition() < FLYWHEEL_ROTATE_MAX) {
+                        // yaw can be like -50 to 50
+                        if (tag.ftcPose.yaw > 15 && flywheelRotateMotor.getCurrentPosition() < FLYWHEEL_ROTATE_MAX) {
+                            flywheelRotateMotor.setPower(0.5);
+                        }
+                        else if (tag.ftcPose.yaw > 10 && flywheelRotateMotor.getCurrentPosition() < FLYWHEEL_ROTATE_MAX) {
                             flywheelRotateMotor.setPower(0.3);
                         }
-                        if (tag.ftcPose.yaw < -2.5 && flywheelRotateMotor.getCurrentPosition() > FLYWHEEL_ROTATE_MIN) {
+                        else if (tag.ftcPose.yaw > 7.8 && flywheelRotateMotor.getCurrentPosition() < FLYWHEEL_ROTATE_MAX) {
+                            flywheelRotateMotor.setPower(0.1);
+                        }
+                        if (tag.ftcPose.yaw < -4 && flywheelRotateMotor.getCurrentPosition() > FLYWHEEL_ROTATE_MIN) {
+                            flywheelRotateMotor.setPower(-0.5);
+                        }
+                        else if (tag.ftcPose.yaw < 4 && flywheelRotateMotor.getCurrentPosition() > FLYWHEEL_ROTATE_MIN) {
                             flywheelRotateMotor.setPower(-0.3);
+                        }
+                        else if (tag.ftcPose.yaw < 6.8 && flywheelRotateMotor.getCurrentPosition() > FLYWHEEL_ROTATE_MIN) {
+                            flywheelRotateMotor.setPower(-0.1);
+                        }
+                        if (tag.ftcPose.yaw < 7.8 && tag.ftcPose.yaw > 6.8) {
+                            flywheelRotateMotor.setPower(0);
                         }
                     }
                 }
+                else {
+                    if (!(gamepad1.b || gamepad2.b) && (gamepad1.left_trigger > 0.1 || gamepad2.left_trigger > 0.1) && flywheelRotateMotor.getCurrentPosition() < FLYWHEEL_ROTATE_MAX) {
+                        flywheelRotateMotor.setPower(gamepad1.left_trigger * 0.85);
+                    } else if (!(gamepad1.b || gamepad2.b) && (gamepad1.right_trigger > 0.1 || gamepad2.right_trigger > 0.1) && flywheelRotateMotor.getCurrentPosition() > FLYWHEEL_ROTATE_MIN) {
+                        flywheelRotateMotor.setPower(gamepad1.right_trigger * -0.85);
+                    } else {
+                        flywheelRotateMotor.setPower(0);
+                    }
+                    telemetry.addData("flywheel rotate: ", flywheelRotateMotor.getCurrentPosition());
+                }
+                telemetry.addData("flyweelRotate: ", flywheelRotateMotor.getPower());
 
                 // Controller 1 Arm Slide
                 // encoder directions become negative depending on motor directions
