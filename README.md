@@ -1,6 +1,6 @@
 ## NOTICE
 
-This repository contains the public FTC SDK for the DECODE (2025-2026) competition season.
+This repository contains the Acalanes Acabots Team 24689 FTC code for the DECODE (2025-2026) competition season.
 
 ## Welcome to the Acabots repository for Decode 2025
 Our robot supports vision and odometry and uses a swiveling turret based design.
