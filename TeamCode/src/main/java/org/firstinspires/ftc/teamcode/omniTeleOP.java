@@ -80,8 +80,8 @@ DRIVER SCHEMA:
 
 @TeleOp
 public class omniTeleOP extends LinearOpMode{
-    int FLYWHEEL_ROTATE_MAX = 600;
-    int FLYWHEEL_ROTATE_MIN = -1250;
+    int FLYWHEEL_ROTATE_MAX = 1350;
+    int FLYWHEEL_ROTATE_MIN = -2150;
     double SLOWER_SPEED_MULTIPLIER = 0.77;
     boolean intakeToggle = false;
     boolean toggleSlowerShoot = false;
