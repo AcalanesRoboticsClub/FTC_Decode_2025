@@ -176,13 +176,13 @@ public class FarAuto extends LinearOpMode {
             beltRight.setPower(1);
             beltVertical.setPower(-1);
             flywheelIntake.setPower(0.5);
-            sleep(2000);
+            sleep(2200);
 
             beltLeft.setPower(0);
             beltRight.setPower(0);
             beltVertical.setPower(0);
             flywheelIntake.setPower(0);
-            sleep(2000);
+            sleep(2200);
 
             intakeLeft.setPower(1);
             intakeRight.setPower(1);
@@ -206,7 +206,7 @@ public class FarAuto extends LinearOpMode {
             beltRight.setPower(1);
             beltVertical.setPower(-1);
             flywheelIntake.setPower(0.5);
-            sleep(2000);
+            sleep(2200);
 
             beltLeft.setPower(0);
             beltRight.setPower(0);
