@@ -82,7 +82,7 @@ DRIVER SCHEMA:
 public class omniTeleOP extends LinearOpMode{
     int FLYWHEEL_ROTATE_MAX = 1350;
     int FLYWHEEL_ROTATE_MIN = -2150;
-    double SLOWER_SPEED_MULTIPLIER = 0.77;
+    double SLOWER_SPEED_MULTIPLIER = 0.79;
     boolean intakeToggle = false;
     boolean toggleSlowerShoot = false;
     double flywheelSpeedMultiplier = 1.0;
@@ -95,7 +95,7 @@ public class omniTeleOP extends LinearOpMode{
     CRServo beltLeft; // 0
     CRServo beltRight; // 1 (expansion)
     CRServo beltVertical; // 2
-//    CRServo turret; // 2 (expansion)
+    //    CRServo turret; // 2 (expansion)
     DcMotor flywheelRotateMotor; // 2 (expansion)
     DcMotor flywheelMotor; // 2
     DcMotor flywheelIntake; // 3
@@ -361,7 +361,7 @@ public class omniTeleOP extends LinearOpMode{
                     toggleSlowerShoot = false;
                 }
                 if (gamepad1.dpad_right || gamepad2.dpad_right) { // CLOSE (other setting)
-                    angle = 0.32;
+                    angle = 0.34;
                     toggleSlowerShoot = false;
                 }
                 // angle is between 0 and 0.4
@@ -392,7 +392,7 @@ public class omniTeleOP extends LinearOpMode{
                         else if (tag.ftcPose.yaw > 10 && flywheelRotateMotor.getCurrentPosition() < FLYWHEEL_ROTATE_MAX) {
                             flywheelRotateMotor.setPower(0.3);
                         }
-                        else if (tag.ftcPose.yaw > 7.2 && flywheelRotateMotor.getCurrentPosition() < FLYWHEEL_ROTATE_MAX) {
+                        else if (tag.ftcPose.yaw > 7.8 && flywheelRotateMotor.getCurrentPosition() < FLYWHEEL_ROTATE_MAX) {
                             flywheelRotateMotor.setPower(0.1);
                         }
                         if (tag.ftcPose.yaw < -4 && flywheelRotateMotor.getCurrentPosition() > FLYWHEEL_ROTATE_MIN) {
@@ -401,10 +401,10 @@ public class omniTeleOP extends LinearOpMode{
                         else if (tag.ftcPose.yaw < 4 && flywheelRotateMotor.getCurrentPosition() > FLYWHEEL_ROTATE_MIN) {
                             flywheelRotateMotor.setPower(-0.3);
                         }
-                        else if (tag.ftcPose.yaw < 6.2 && flywheelRotateMotor.getCurrentPosition() > FLYWHEEL_ROTATE_MIN) {
+                        else if (tag.ftcPose.yaw < 6.8 && flywheelRotateMotor.getCurrentPosition() > FLYWHEEL_ROTATE_MIN) {
                             flywheelRotateMotor.setPower(-0.1);
                         }
-                        if (tag.ftcPose.yaw < 7.2 && tag.ftcPose.yaw > 6.2) {
+                        if (tag.ftcPose.yaw < 7.8 && tag.ftcPose.yaw > 6.8) {
                             flywheelRotateMotor.setPower(0);
                         }
                     }
