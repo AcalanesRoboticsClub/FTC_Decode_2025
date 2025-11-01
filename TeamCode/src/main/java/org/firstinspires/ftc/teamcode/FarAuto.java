@@ -160,8 +160,11 @@ public class FarAuto extends LinearOpMode {
         waitForStart();
         // 4. Drive forward for 1 second
         if (opModeIsActive()) {
+            flywheelRotateMotor.setTargetPosition(0);
+            flywheelRotateMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+            flywheelRotateMotor.setPower(0.7);
             angle = 0.23;
-            flywheelRotateMotor.setTargetPosition(190);
+            flywheelRotateMotor.setTargetPosition(200);
             flywheelRotateMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             flywheelRotateMotor.setPower(0.7);
             flywheelAngle.setPosition(angle);
@@ -173,13 +176,13 @@ public class FarAuto extends LinearOpMode {
             beltRight.setPower(1);
             beltVertical.setPower(-1);
             flywheelIntake.setPower(0.5);
-            sleep(2000);
+            sleep(2200);
 
             beltLeft.setPower(0);
             beltRight.setPower(0);
             beltVertical.setPower(0);
             flywheelIntake.setPower(0);
-            sleep(1500);
+            sleep(2200);
 
             intakeLeft.setPower(1);
             intakeRight.setPower(1);
@@ -187,13 +190,15 @@ public class FarAuto extends LinearOpMode {
             beltRight.setPower(1);
             beltVertical.setPower(-1);
             flywheelIntake.setPower(0.5);
-            sleep(2000);
+            sleep(1000);
 
+            intakeLeft.setPower(0);
+            intakeRight.setPower(0);
             beltLeft.setPower(0);
             beltRight.setPower(0);
             beltVertical.setPower(0);
             flywheelIntake.setPower(0);
-            sleep(2000);
+            sleep(2500);
 
             intakeLeft.setPower(1);
             intakeRight.setPower(1);
@@ -201,13 +206,13 @@ public class FarAuto extends LinearOpMode {
             beltRight.setPower(1);
             beltVertical.setPower(-1);
             flywheelIntake.setPower(0.5);
-            sleep(2000);
+            sleep(2200);
 
             beltLeft.setPower(0);
             beltRight.setPower(0);
             beltVertical.setPower(0);
             flywheelIntake.setPower(0);
-            sleep(1500);
+
 
 
 
@@ -229,6 +234,22 @@ public class FarAuto extends LinearOpMode {
             beltRight.setPower(0);
             beltVertical.setPower(0);
             flywheelIntake.setPower(0);
+
+
+            frontRightMotor.setPower(0.3);
+            backRightMotor.setPower(0.3);
+            frontLeftMotor.setPower(-0.3);
+            backLeftMotor.setPower(-0.3);
+            sleep(1350);
+
+            frontRightMotor.setPower(0);
+            frontLeftMotor.setPower(0);
+            backRightMotor.setPower(0);
+            backLeftMotor.setPower(0);
+
+            flywheelRotateMotor.setTargetPosition(0);
+            flywheelRotateMotor.setPower(0.7);
+            sleep(1000);
 
         }
 
