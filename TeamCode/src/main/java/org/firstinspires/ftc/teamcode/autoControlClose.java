@@ -187,7 +187,7 @@ public class autoControlClose extends LinearOpMode {
             beltRight.setPower(1);
             beltVertical.setPower(-1);
             flywheelIntake.setPower(1);
-            sleep(5000);
+            sleep(7000);
 
             StopAll();
 
