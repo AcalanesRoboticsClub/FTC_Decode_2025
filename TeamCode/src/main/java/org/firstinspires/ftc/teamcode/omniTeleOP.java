@@ -82,7 +82,7 @@ DRIVER SCHEMA:
 public class omniTeleOP extends LinearOpMode{
     int FLYWHEEL_ROTATE_MAX = 1350;
     int FLYWHEEL_ROTATE_MIN = -2150;
-    double SLOWER_SPEED_MULTIPLIER = 0.79;
+    double SLOWER_SPEED_MULTIPLIER = 0.77;
     boolean intakeToggle = false;
     boolean toggleSlowerShoot = false;
     double flywheelSpeedMultiplier = 1.0;

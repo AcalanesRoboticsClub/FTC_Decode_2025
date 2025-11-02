@@ -53,16 +53,14 @@ package org.firstinspires.ftc.teamcode;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
-import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
-import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.Servo;
 
 @Autonomous
-public class autoControlClose extends LinearOpMode {
+public class autoCloseBlue extends LinearOpMode {
     DcMotor frontLeftMotor; // 1
     DcMotor backLeftMotor; // 0
     DcMotor frontRightMotor; // 1 (expansion)
@@ -179,7 +177,7 @@ public class autoControlClose extends LinearOpMode {
             StopAll();
 
             flywheelAngle.setPosition(0);
-            flywheelMotor.setPower(0.75); // shoot
+            flywheelMotor.setPower(0.73); // shoot
             sleep(3000);
             intakeLeft.setPower(1);
             intakeRight.setPower(1);
