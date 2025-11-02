@@ -62,7 +62,7 @@ import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.Servo;
 
 @Autonomous
-public class autoControlClose extends LinearOpMode {
+public class autoControlCloseRed extends LinearOpMode {
     DcMotor frontLeftMotor; // 1
     DcMotor backLeftMotor; // 0
     DcMotor frontRightMotor; // 1 (expansion)
@@ -79,7 +79,7 @@ public class autoControlClose extends LinearOpMode {
     Servo flywheelAngle; // 2 (expansion)
     // CRServo clawIntake;
     IMU imu;
-//    DistanceSensor rightDistanceSensor;
+    //    DistanceSensor rightDistanceSensor;
 //    DistanceSensor backDistanceSensor;
     double angle;
 
@@ -190,18 +190,18 @@ public class autoControlClose extends LinearOpMode {
             sleep(7000); // shoot all 3
             StopAll();
 
-            // BLUE
-            frontRightMotor.setPower(0.3);
-            backRightMotor.setPower(0.3);
-            frontLeftMotor.setPower(-0.3);
-            backLeftMotor.setPower(-0.3);
+            // RED
+            frontRightMotor.setPower(-0.3);
+            backRightMotor.setPower(-0.3);
+            frontLeftMotor.setPower(0.3);
+            backLeftMotor.setPower(0.3);
             sleep(580);
             StopAll();
 
-            backLeftMotor.setPower(0.3); // move sideways
-            frontLeftMotor.setPower(-0.3);
-            backRightMotor.setPower(-0.3);
-            frontRightMotor.setPower(0.3);
+            backLeftMotor.setPower(-0.3); // move sideways
+            frontLeftMotor.setPower(0.3);
+            backRightMotor.setPower(0.3);
+            frontRightMotor.setPower(-0.3);
             sleep(2000);
             StopAll();
 
