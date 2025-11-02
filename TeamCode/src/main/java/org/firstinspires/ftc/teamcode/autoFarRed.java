@@ -51,22 +51,18 @@ Joysticks:
  */
 
 package org.firstinspires.ftc.teamcode;
-import com.qualcomm.hardware.rev.Rev2mDistanceSensor;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.IMU;
-import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.hardware.Servo;
-import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
     @Autonomous
-    public class FarAutoRed extends LinearOpMode {
+    public class autoFarRed extends LinearOpMode {
         DcMotor frontLeftMotor; // 1
         DcMotor backLeftMotor; // 0
         DcMotor frontRightMotor; // 1 (expansion)
@@ -166,11 +162,11 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
                 flywheelRotateMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                 flywheelRotateMotor.setPower(0.7);
                 angle = 0.23;
-                flywheelRotateMotor.setTargetPosition(-200);
+                flywheelRotateMotor.setTargetPosition(-194);
                 flywheelRotateMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
                 flywheelRotateMotor.setPower(0.7);
                 flywheelAngle.setPosition(angle);
-                flywheelMotor.setPower(1);
+                flywheelMotor.setPower(0.98);
                 sleep(1500);
                 intakeLeft.setPower(1);
                 intakeRight.setPower(1);
@@ -180,9 +176,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
                 flywheelIntake.setPower(0.5);
                 sleep(2200);
 
-                beltLeft.setPower(0);
-                beltRight.setPower(0);
-                beltVertical.setPower(0);
+
                 flywheelIntake.setPower(0);
                 sleep(2200);
 
@@ -192,13 +186,9 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
                 beltRight.setPower(1);
                 beltVertical.setPower(-1);
                 flywheelIntake.setPower(0.5);
-                sleep(1000);
+                sleep(1100);
 
-                intakeLeft.setPower(0);
-                intakeRight.setPower(0);
-                beltLeft.setPower(0);
-                beltRight.setPower(0);
-                beltVertical.setPower(0);
+
                 flywheelIntake.setPower(0);
                 sleep(2500);
 
@@ -208,11 +198,9 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
                 beltRight.setPower(1);
                 beltVertical.setPower(-1);
                 flywheelIntake.setPower(0.5);
-                sleep(2200);
+                sleep(2500);
 
-                beltLeft.setPower(0);
-                beltRight.setPower(0);
-                beltVertical.setPower(0);
+
                 flywheelIntake.setPower(0);
 
 
@@ -231,10 +219,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
                 backLeftMotor.setPower(0);
 
 
-                flywheelMotor.setPower(0);
-                beltLeft.setPower(0);
-                beltRight.setPower(0);
-                beltVertical.setPower(0);
+
                 flywheelIntake.setPower(0);
 
 
