@@ -178,7 +178,7 @@ public class autoCloseBlue extends LinearOpMode {
 
             flywheelAngle.setPosition(0);
             flywheelMotor.setPower(0.73); // shoot
-            sleep(3000);
+            sleep(3000); // power up
             intakeLeft.setPower(1);
             intakeRight.setPower(1);
             beltLeft.setPower(1);
