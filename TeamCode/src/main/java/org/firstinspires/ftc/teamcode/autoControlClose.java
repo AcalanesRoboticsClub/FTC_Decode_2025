@@ -179,18 +179,18 @@ public class autoControlClose extends LinearOpMode {
             StopAll();
 
             flywheelAngle.setPosition(0);
-            flywheelMotor.setPower(0.75); // shoot
-            sleep(3000);
+            flywheelMotor.setPower(0.75); // flywheel
+            sleep(3000); // power up
             intakeLeft.setPower(1);
             intakeRight.setPower(1);
             beltLeft.setPower(1);
             beltRight.setPower(1);
             beltVertical.setPower(-1);
             flywheelIntake.setPower(1);
-            sleep(7000);
-
+            sleep(7000); // shoot all 3
             StopAll();
 
+            // BLUE
             frontRightMotor.setPower(0.3);
             backRightMotor.setPower(0.3);
             frontLeftMotor.setPower(-0.3);
@@ -198,13 +198,29 @@ public class autoControlClose extends LinearOpMode {
             sleep(580);
             StopAll();
 
-            backLeftMotor.setPower(0.3); // 169-177 move forward to center
+            backLeftMotor.setPower(0.3); // move sideways
             frontLeftMotor.setPower(-0.3);
             backRightMotor.setPower(-0.3);
             frontRightMotor.setPower(0.3);
             sleep(2000);
             StopAll();
 
+            // RED
+//            frontRightMotor.setPower(-0.3);
+//            backRightMotor.setPower(-0.3);
+//            frontLeftMotor.setPower(0.3);
+//            backLeftMotor.setPower(0.3);
+//            sleep(580);
+//            StopAll();
+
+//            backLeftMotor.setPower(-0.3); // move sideways
+//            frontLeftMotor.setPower(0.3);
+//            backRightMotor.setPower(0.3);
+//            frontRightMotor.setPower(-0.3);
+//            sleep(2000);
+//            StopAll();
+
+            // SAME FOR BOTH
             backLeftMotor.setPower(0.3); // 169-177 move forward to center
             frontLeftMotor.setPower(0.3);
             backRightMotor.setPower(0.3);
