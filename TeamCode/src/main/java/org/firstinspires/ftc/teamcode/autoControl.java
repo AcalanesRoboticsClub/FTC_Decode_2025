@@ -203,71 +203,16 @@ public class autoControl extends LinearOpMode {
             Pose2D pos = odo.getPosition();
             String data = String.format(Locale.US, "{X: %.3f, Y: %.3f, H: %.3f}", pos.getX(DistanceUnit.INCH), pos.getY(DistanceUnit.INCH), pos.getHeading(AngleUnit.DEGREES));
             telemetry.addData("Position", data);
-            double xPos = pos.getX(DistanceUnit.INCH);
-            double yPos = pos.getY(DistanceUnit.INCH);
-            double heading = pos.getHeading(AngleUnit.DEGREES);
 
             // Get velocity of the robot
             String velocity = String.format(Locale.US,"{XVel: %.3f, YVel: %.3f, HVel: %.3f}", odo.getVelX(DistanceUnit.INCH), odo.getVelY(DistanceUnit.INCH), odo.getHeadingVelocity(UnnormalizedAngleUnit.DEGREES));
             telemetry.addData("Velocity", velocity);
-            double xVelo = odo.getVelX(DistanceUnit.INCH);
-            double yVelo = odo.getVelY(DistanceUnit.INCH);
-            double headVelo = odo.getHeadingVelocity(UnnormalizedAngleUnit.DEGREES);
 
             // Get status of the odometry (error stuff)
             telemetry.addData("Status", odo.getDeviceStatus());
             telemetry.addData("Pinpoint Frequency", odo.getFrequency()); //prints/gets the current refresh rate of the Pinpoint
             telemetry.addData("REV Hub Frequency: ", frequency); //prints the control system refresh rate
             telemetry.update();
-
-            /* Tsimur Autonomous
-            backLeftMotor.setPower(0.5); // 169-177 move forward to center
-            frontLeftMotor.setPower(0.5);
-            backRightMotor.setPower(0.5);
-            frontRightMotor.setPower(0.5);
-            sleep(2320); // move for 2.2 second (2200 ms)
-            StopAll();
-
-            backLeftMotor.setPower(-0.5); // 169-177 move forward to center
-            frontLeftMotor.setPower(-0.5);
-            backRightMotor.setPower(0.5);
-            frontRightMotor.setPower(0.5);
-            sleep(410);
-            StopAll();
-
-            flywheelMotor.setPower(1);
-            sleep(1000);
-            beltLeft.setPower(-1);
-            beltRight.setPower(1);
-            beltVertical.setPower(1);
-            flywheelIntake.setPower(1);
-            sleep(5000);
-
-            StopAll();
-
-
-            backLeftMotor.setPower(-0.5); // 169-177 move forward to center
-            frontLeftMotor.setPower(-0.5);
-            backRightMotor.setPower(0.5);
-            frontRightMotor.setPower(0.5);
-            sleep(410);
-            StopAll();
-
-            intakeLeft.setPower(-1);
-            intakeRight.setPower(-1);
-            beltLeft.setPower(-1);
-            beltRight.setPower(1);
-            beltVertical.setPower(1);
-            sleep(1000);
-
-            backLeftMotor.setPower(0.12); // 169-177 move forward to center
-            frontLeftMotor.setPower(0.12);
-            backRightMotor.setPower(0.12);
-            frontRightMotor.setPower(0.12);
-            sleep(7000);
-
-            StopAll();
-            */
 
         }
 
