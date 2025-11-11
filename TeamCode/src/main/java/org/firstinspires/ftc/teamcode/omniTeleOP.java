@@ -82,9 +82,7 @@ DRIVER SCHEMA:
 public class omniTeleOP extends LinearOpMode{
     int FLYWHEEL_ROTATE_MAX = 1350;
     int FLYWHEEL_ROTATE_MIN = -2150;
-    double SLOWER_SPEED_MULTIPLIER = 0.77;
     boolean intakeToggle = false;
-    boolean toggleSlowerShoot = false;
     double flywheelSpeedMultiplier = 1.0;
     DcMotor frontLeftMotor; // 1
     DcMotor backLeftMotor; // 0
@@ -329,12 +327,7 @@ public class omniTeleOP extends LinearOpMode{
                     beltVertical.setPower(0);
                 }
 
-                // Flywheel
-                if (toggleSlowerShoot) {
-                    flywheelSpeedMultiplier = SLOWER_SPEED_MULTIPLIER;
-                } else {
-                    flywheelSpeedMultiplier = 1;
-                }
+
 
                 if (gamepad1.right_bumper || gamepad2.right_bumper) {
                     flywheelMotor.setPower(1 * flywheelSpeedMultiplier);
@@ -350,19 +343,19 @@ public class omniTeleOP extends LinearOpMode{
 
                 if (gamepad1.dpad_up || gamepad2.dpad_up) { // CLOSEST (touching wall)
                     angle = 0;
-                    toggleSlowerShoot = true;
+                    flywheelSpeedMultiplier = 0.68;
                 }
                 if (gamepad1.dpad_left || gamepad2.dpad_left) { // CLOSE (centered on closer triangle)
-                    angle = 0.3;
-                    toggleSlowerShoot = false;
+                    angle = 0.29;
+                    flywheelSpeedMultiplier = 0.8;
                 }
                 if (gamepad1.dpad_down || gamepad2.dpad_down) { // FAR (centered on top of triangle)
-                    angle = 0.25;
-                    toggleSlowerShoot = false;
+                    angle = 0.23;
+                    flywheelSpeedMultiplier = 0.9;
                 }
                 if (gamepad1.dpad_right || gamepad2.dpad_right) { // CLOSE (other setting)
-                    angle = 0.34;
-                    toggleSlowerShoot = false;
+                    angle = 0.35;
+                    flywheelSpeedMultiplier = 0.83;
                 }
                 // angle is between 0 and 0.4
                 flywheelAngle.setPosition(angle);
