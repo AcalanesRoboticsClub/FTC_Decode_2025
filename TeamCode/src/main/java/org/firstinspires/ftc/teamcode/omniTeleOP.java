@@ -93,7 +93,7 @@ public class omniTeleOP extends LinearOpMode{
     CRServo beltLeft; // 0
     CRServo beltRight; // 1 (expansion)
     CRServo beltVertical; // 2
-//    CRServo turret; // 2 (expansion)
+    //    CRServo turret; // 2 (expansion)
     DcMotor flywheelRotateMotor; // 2 (expansion)
     DcMotor flywheelMotor; // 2
     DcMotor flywheelIntake; // 3
