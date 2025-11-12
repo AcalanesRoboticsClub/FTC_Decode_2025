@@ -114,8 +114,8 @@ public class odo12BallFarBlue extends LinearOpMode {
         odo.resetPosAndIMU();
 
         // For RoadRunner pathing
-        odo.setHeading(0, AngleUnit.DEGREES); // Set initial angle
-        Pose2d startPose = new Pose2d(-59, 12, Math.toRadians(0)); // starting coordinates and heading
+        odo.setHeading(180, AngleUnit.DEGREES); // Set initial angle
+        Pose2d startPose = new Pose2d(59, -12, Math.toRadians(180)); // starting coordinates and heading
         MecanumDrive drive = new MecanumDrive(hardwareMap, startPose);
 
         telemetry.addData("Status", "Initialized");
@@ -153,15 +153,15 @@ public class odo12BallFarBlue extends LinearOpMode {
             // Pickup first row of artifacts
             Actions.runBlocking(
                     drive.actionBuilder(startPose)
-                            .splineTo(new Vector2d(-48, 12), Math.toRadians(0)) // Drive strait forward
-                            .splineTo(new Vector2d(-36, 24), Math.toRadians(90)) // curve toward close artifact row
-                            .splineTo(new Vector2d(-36, 56), Math.toRadians(90)) // drive forward to intake artifacts
+                            .splineTo(new Vector2d(48, -12), Math.toRadians(180)) // Drive strait forward
+                            .splineTo(new Vector2d(36, -24), Math.toRadians(270)) // curve toward close artifact row
+                            .splineTo(new Vector2d(36, -56), Math.toRadians(270)) // drive forward to intake artifacts
                             .build());
 
             // go to center to shoot
             Actions.runBlocking(
                     drive.actionBuilder(drive.localizer.getPose())
-                            .splineTo(new Vector2d(0, 0), Math.toRadians(45)) // go to center and point at goal
+                            .splineTo(new Vector2d(0, 0), Math.toRadians(225)) // go to center and point at goal
                             .build());
 
             flywheelMotor.setPower(0.82); // For middle location
@@ -172,14 +172,14 @@ public class odo12BallFarBlue extends LinearOpMode {
             // Pickup middle row of artifacts
             Actions.runBlocking(
                     drive.actionBuilder(drive.localizer.getPose())
-                            .splineTo(new Vector2d(-12, 24), Math.toRadians(90)) // Face row and drive to front of it
-                            .splineTo(new Vector2d(-12, 44), Math.toRadians(90)) // drive forward to intake artifacts
+                            .splineTo(new Vector2d(12, -24), Math.toRadians(270)) // Face row and drive to front of it
+                            .splineTo(new Vector2d(12, -44), Math.toRadians(270)) // drive forward to intake artifacts
                             .build());
 
             // go to center to shoot
             Actions.runBlocking(
                     drive.actionBuilder(drive.localizer.getPose())
-                            .splineTo(new Vector2d(0, 0), Math.toRadians(45)) // go to center and point at goal
+                            .splineTo(new Vector2d(0, 0), Math.toRadians(225)) // go to center and point at goal
                             .build());
 
             shootThree();
@@ -187,14 +187,14 @@ public class odo12BallFarBlue extends LinearOpMode {
             // Pickup far row of artifacts
             Actions.runBlocking(
                     drive.actionBuilder(drive.localizer.getPose())
-                            .splineTo(new Vector2d(12, 24), Math.toRadians(90)) // Face row and drive to front of it
-                            .splineTo(new Vector2d(12, 44), Math.toRadians(90)) // drive forward to intake artifacts
+                            .splineTo(new Vector2d(-12, -24), Math.toRadians(270)) // Face row and drive to front of it
+                            .splineTo(new Vector2d(-12, -44), Math.toRadians(270)) // drive forward to intake artifacts
                             .build());
 
             // Go to close/lobbing shooting position
             Actions.runBlocking(
                     drive.actionBuilder(drive.localizer.getPose())
-                            .splineTo(new Vector2d(36, 30), Math.toRadians(45))
+                            .splineTo(new Vector2d(-36, -30), Math.toRadians(225))
                             .build());
 
 
@@ -206,7 +206,7 @@ public class odo12BallFarBlue extends LinearOpMode {
             // Get out of launch zone
             Actions.runBlocking(
                     drive.actionBuilder(drive.localizer.getPose())
-                            .splineTo(new Vector2d(24, 40), Math.toRadians(90)) // get out of launch zone
+                            .splineTo(new Vector2d(-24, -40), Math.toRadians(270)) // get out of launch zone
                             .build());
 
             StopAll();
