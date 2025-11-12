@@ -7,12 +7,9 @@ import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
-import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.hardware.Servo;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
-import java.util.Locale;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.acmerobotics.roadrunner.ftc.Actions;
@@ -35,7 +32,7 @@ public class odo12BallFarBlue extends LinearOpMode {
     IMU imu;
 
     double angle;
-    GoBildaPinpointDriver pinpoint;
+    GoBildaPinpointDriver odo;
     double oldTime = 0;
 
     public void StopAll() {
@@ -56,19 +53,21 @@ public class odo12BallFarBlue extends LinearOpMode {
     public void shootThree()
     {
         // Intake balls into turret to shoot all 3
-        flywheelIntake.setPower(0.5);
+        flywheelIntake.setPower(1);
 
-        sleep(6000); // Wait for all 3 to shoot
+        sleep(5000); // Wait for all 3 to shoot
 
         flywheelIntake.setPower(0); // stop shooting but leave intake and flywheel running
     }
 
     @Override
     public void runOpMode() throws InterruptedException {
+        /*
         frontLeftMotor = hardwareMap.dcMotor.get("frontLeftMotor");
         backLeftMotor = hardwareMap.dcMotor.get("backLeftMotor");
         frontRightMotor = hardwareMap.dcMotor.get("frontRightMotor");
         backRightMotor = hardwareMap.dcMotor.get("backRightMotor");
+         */
 
         // Game Element Intake
         intakeLeft = hardwareMap.get(CRServo.class, "intakeLeft");
@@ -93,6 +92,7 @@ public class odo12BallFarBlue extends LinearOpMode {
         frontLeftMotor.setDirection(DcMotorSimple.Direction.REVERSE);
         backLeftMotor.setDirection(DcMotorSimple.Direction.REVERSE);
 
+        /*
         // Retrieve the IMU from the hardware map <------------------------------------------------------- Is this being used??
         imu = hardwareMap.get(IMU.class, "imu");
         // Adjust the orientation parameters to match your robot
@@ -101,42 +101,31 @@ public class odo12BallFarBlue extends LinearOpMode {
                 RevHubOrientationOnRobot.UsbFacingDirection.RIGHT));
         // Without this, the REV Hub's orientation is assumed to be logo up / USB forward
         imu.initialize(parameters);
+        */
 
         // Setup odometry params
-        pinpoint = hardwareMap.get(GoBildaPinpointDriver.class,"odo");
-        pinpoint.setOffsets(0, 0, DistanceUnit.INCH); // <-------------------------------------------- SEND HELP HERE IDK WHAT IT DOES
-        pinpoint.setEncoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD);
-        pinpoint.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.FORWARD, GoBildaPinpointDriver.EncoderDirection.FORWARD);
+        odo = hardwareMap.get(GoBildaPinpointDriver.class,"odo");
+        odo.setOffsets(0, 0, DistanceUnit.INCH); // <-------------------------------------------- NO IDEA WHAT THIS DOES AT ALL
+        odo.setEncoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD);
+        odo.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.FORWARD, GoBildaPinpointDriver.EncoderDirection.FORWARD);
 
         // Initialize odometry stuff when match starts
-        pinpoint.resetPosAndIMU();
+        odo.resetPosAndIMU();
 
         // For RoadRunner pathing
-        pinpoint.setHeading(0, AngleUnit.DEGREES); // Set initial angle
-        Pose2d startPose = new Pose2d(-63, 12, 0); // starting coordinates and heading
+        odo.setHeading(0, AngleUnit.DEGREES); // Set initial angle
+        Pose2d startPose = new Pose2d(-63, 12, Math.toRadians(0)); // starting coordinates and heading
         MecanumDrive drive = new MecanumDrive(hardwareMap, startPose);
 
         telemetry.addData("Status", "Initialized");
-        telemetry.addData("Heading Scalar", pinpoint.getYawScalar());
+        telemetry.addData("Heading Scalar", odo.getYawScalar());
         telemetry.update();
 
         waitForStart();
         if (opModeIsActive()) {
-            pinpoint.update();
-
-            // Update time variable
-            double newTime = getRuntime();
-            double loopTime = newTime - oldTime;
-            double frequency = 1 / loopTime;
-            oldTime = newTime;
-
-            // Get the position of the robot
-            Pose2D pos = pinpoint.getPosition();
-            String data = String.format(Locale.US, "{X: %.3f, Y: %.3f, H: %.3f}", pos.getX(DistanceUnit.INCH), pos.getY(DistanceUnit.INCH), pos.getHeading(AngleUnit.DEGREES));
-            telemetry.addData("Position", data);
-
+            odo.update();
             // Get status of the odometry (error stuff)
-            telemetry.addData("Status", pinpoint.getDeviceStatus());
+            telemetry.addData("Odometry Status: ", odo.getDeviceStatus());
             telemetry.update();
 
             // Start up all belts
@@ -157,7 +146,6 @@ public class odo12BallFarBlue extends LinearOpMode {
             shootThree(); // from far location
 
             flywheelRotateMotor.setTargetPosition(0); // Return turret to center for next shots
-
 
             // Pickup first row of artifacts
             Actions.runBlocking(
