@@ -1,8 +1,6 @@
 // Written by AcaBots FTC team 24689 for the 2025-26 DECODE Season
 
-
 package org.firstinspires.ftc.teamcode;
-
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
