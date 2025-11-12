@@ -1,82 +1,49 @@
-// Written primarily by Henry Rosenberg for AcaBots, FTC Team #24689
-// hi also sze ting
+// Written by AcaBots FTC team 24689 for the 2025-26 DECODE Season
+
 /*
 -------------------- CONTROL SCHEME - CONTROLLER 1 --------------------
 Buttons:
-    A:
-    B:
-    X:
-    Y:
+    A: Toggle intake, transfer, and riser belts
+    START: Reset IMU
+    BACK: Reverse intake, transfer, and riser belts + turret intake kicker wheel
 
 D-Pad:
-    UP:
-    DOWN:
-    RIGHT:
+    UP: Close/lobbing preset
+    DOWN: Far launch zone preset
+    RIGHT: Middle launch zone preset, low angle
+    LEFT: Middle launch zone preset, high angle
 
 Triggers:
-    RT: Hold for Intake
-    LT: Hold for Reverse Intake
-    BOTH:
+    RT: Turret rotate right
+    LT: Turret rotate left
 
 Shoulder Buttons:
-    RB:
-    LB:
+    RB: Turret flywheel
+    LB: Turret intake kicker wheel
 
 Joysticks:
     Right: Relative Chassis Rotation
     Left: Absolute Chassis Strafe based on orientation when START button is pressed
 
 -------------------- CONTROL SCHEME - CONTROLLER 2 --------------------
-Buttons:
-    A: Hold for Flywheel
-    B: Hold for Reverse Flywheel
-    Y:
-
-Triggers:
-    RT: Hold for Belts
-    LT: Hold for Reverse Belts
-
-Joysticks:
-    Right: Relative Chassis Rotation
-    Left: Absolute Chassis Strafe based on orientation when START button is pressed
-
- ---------------------------- START CONFIG ----------------------------
- Hanging Hooks: Open
- Arm Slide: Retracted
- Arm Pivot: Down, resting on bottom stop
- Claw Wrist: Folded left
+Same as controller 1, except turret rotation is disabled
  */
 
 package org.firstinspires.ftc.teamcode;
 import android.util.Size;
-
-import com.qualcomm.hardware.rev.Rev2mDistanceSensor;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
-import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.hardware.Servo;
-
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
-
-/*
-DRIVER SCHEMA:
-- Driver 1
-    chassis driver
-    flywheel rotation
-- Driver 2
-    flywheel shooting and presets
-    intake
-*/
 
 @TeleOp
 public class omniTeleOP extends LinearOpMode{
@@ -93,15 +60,11 @@ public class omniTeleOP extends LinearOpMode{
     CRServo beltLeft; // 0
     CRServo beltRight; // 1 (expansion)
     CRServo beltVertical; // 2
-    //    CRServo turret; // 2 (expansion)
     DcMotor flywheelRotateMotor; // 2 (expansion)
     DcMotor flywheelMotor; // 2
     DcMotor flywheelIntake; // 3
     Servo flywheelAngle; // 2 (expansion)
-    // CRServo clawIntake;
     IMU imu;
-    DistanceSensor rightDistanceSensor;
-    DistanceSensor backDistanceSensor;
     double angle;
 
     private double calcLargestChange(double a, double b) {
@@ -112,16 +75,6 @@ public class omniTeleOP extends LinearOpMode{
             return a;
         }
     }
-
-    private int setSignFromReference(int newAbsoluteValue, int signReference) {
-        // Return the value of newAbsoluteValue with the + or - sign of signReference. Used for teleOp presets
-        if (signReference <= 0) {
-            return -newAbsoluteValue;
-        } else {
-            return newAbsoluteValue;
-        }
-    }
-
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -187,16 +140,9 @@ public class omniTeleOP extends LinearOpMode{
             // Without this, the REV Hub's orientation is assumed to be logo up / USB forward
             imu.initialize(parameters);
 
-            // Chassis-mounted distance sensors
-            //        rightDistanceSensor = hardwareMap.get(DistanceSensor.class, "rightDistanceSensor");
-            //        backDistanceSensor = hardwareMap.get(DistanceSensor.class, "backDistanceSensor");
 
             waitForStart();
 
-            // Set servos to their starting positions
-            // clawWrist.setPosition(-1); // start within the starting config
-            // rightHang.setPosition(0.6); // Start Closed
-            // leftHang.setPosition(0.4);
 
             if (isStopRequested()) return;
 
@@ -231,10 +177,7 @@ public class omniTeleOP extends LinearOpMode{
                 double backLeftPower = (rotY - rotX + rx) / denominator;
                 double frontRightPower = (rotY - rotX - rx) / denominator;
                 double backRightPower = (rotY + rotX - rx) / denominator;
-                //            double frontLeftPower = (y + x + rx);
-                //            double frontRightPower = (y - x - rx);
-                //            double backLeftPower = (y - x + rx);
-                //            double backRightPower = (y + x - rx);
+
 
                 double max = Math.max(Math.abs(frontLeftPower), Math.abs(frontRightPower));
                 max = Math.max(max, Math.abs(backLeftPower));
@@ -256,46 +199,6 @@ public class omniTeleOP extends LinearOpMode{
                 telemetry.addData("Front left/Right", "%4.2f, %4.2f", frontLeftPower, frontRightPower);
                 telemetry.addData("Back  left/Right", "%4.2f, %4.2f", backLeftPower, backRightPower);
 
-                // Controller 1 Arm Pivot Motor
-                /*
-                int armPivotPos = armPivotMotor.getCurrentPosition(); // current position of the slide, used to prevent overextension/going past 0
-                if((gamepad1.right_trigger > 0.3 && armPivotPos <= 4000) && gamepad1.left_trigger < 0.1) {
-                    armPivotMotor.setPower(gamepad1.right_trigger); // extend at the power of the trigger
-                    armPivotMotor.setDirection(DcMotor.Direction.FORWARD);
-                    armPivotMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-                    armPivotDesiredPos = armPivotMotor.getCurrentPosition();
-                } else if ((gamepad1.left_trigger > 0.3 && (armPivotPos >= 150 || armPivotPos <= -150)) && gamepad1.right_trigger < 0.1) { // encoder pos is inverted when in reverse; so it just checks to make sure it isn't within 50 of zero
-                    armPivotMotor.setPower(gamepad1.left_trigger);  // retract continuously at the power of the trigger
-                    armPivotMotor.setDirection(DcMotor.Direction.REVERSE);
-                    armPivotMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-                    armPivotDesiredPos = armPivotMotor.getCurrentPosition();
-                } else {
-                    armPivotMotor.setTargetPosition(armPivotDesiredPos); // hold the motor in its current position
-                    armPivotMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION); // Use builtin PID loop to hold position
-                    armPivotMotor.setPower(1); // Holding power
-                }
-                */
-
-                // Controller 1 Hanging hooks & arm slide power 'hanging mode'
-                /*
-                if (gamepad1.x && ((rightHang.getPosition() > 0.55) || (leftHang.getPosition() < 0.45))) { // if A button is pressed AND both of the claws is closed, open the claws
-                    rightHang.setPosition(0); // They are facing away from each-other, so they start at opposite ends
-                    leftHang.setPosition(1);
-                    armSlideHoldingPower = 1; // claws will only be opened for climbing, and full slide power is needed for hanging
-                    armSlideSoftLimit = 2250; // max reach
-                    armSlideMotor.setPower(armSlideHoldingPower);
-                } else if (gamepad1.x && ((rightHang.getPosition() < 0.55) || (leftHang.getPosition() > 0.45))) { // if A button is pressed AND both of the claws is open, close the claws
-                    rightHang.setPosition(0.6); // +0.6 from open
-                    leftHang.setPosition(0.4); // -0.6 from open, due to facing opposite direction
-                    armSlideHoldingPower = 0.5; // When the claws are closed, there will be no hanging force on the slide
-                    armSlideSoftLimit = 2000;
-                    armSlideMotor.setPower(armSlideHoldingPower);
-                }
-                */
-
-                /*if (gamepad1.dpad_right) {
-                    armSlideSoftLimit = 5000; // No limit, in case of belt slip
-                }*/
 
                 // Controller 1 Intake
                 if (gamepad1.aWasPressed() || gamepad2.aWasPressed()) {
@@ -412,50 +315,8 @@ public class omniTeleOP extends LinearOpMode{
                     }
                     telemetry.addData("flywheel rotate: ", flywheelRotateMotor.getCurrentPosition());
                 }
-                telemetry.addData("flyweelRotate: ", flywheelRotateMotor.getPower());
-
-                // Controller 1 Arm Slide
-                // encoder directions become negative depending on motor directions
-                /*int armSlidePos = armSlideMotor.getCurrentPosition(); // current position of the slide, used to prevent overextension/going past 0
-                if(gamepad1.dpad_up && (Math.abs(armSlidePos) <= armSlideSoftLimit)) { // 2000 is hardcoded end stop
-                    armSlideMotor.setPower(1); // extend continuously while button is held
-                    armSlideMotor.setDirection(DcMotor.Direction.REVERSE);
-                    armSlideMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-                    armSlideDesiredPos = armSlideMotor.getCurrentPosition();
-                    armSlideLastMoveDirection = true; // forward
-                } else if (gamepad1.dpad_down && (armSlideLastMoveDirection || Math.abs(armSlidePos) >= 50 )) { // encoder pos is inverted when in reverse; so it just checks to make sure it isn't within 35 of zero (due to belt slop)
-                    armSlideMotor.setPower(1);  // retract continuously while button is held
-                    armSlideMotor.setDirection(DcMotor.Direction.FORWARD);
-                    armSlideMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER); // Use builtin PID loop to run to position
-                    armSlideDesiredPos = armSlideMotor.getCurrentPosition(); // store current position in case the button isn't pressed next loop, so it knows where to hold
-                    armSlideLastMoveDirection = false; // backward
-                } else {
-                    armSlideMotor.setTargetPosition(armSlideDesiredPos); // hold the motor at the position it was in last time it was moved
-                    armSlideMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION); // Use builtin PID loop to hold position
-                    armSlideMotor.setPower(armSlideHoldingPower); // Holding power
-                }*/
-
-
-                // Transport Mode
-                /*if (gamepad1.y || gamepad2.y) {
-                    armPivotDesiredPos = setSignFromReference(700, armPivotDesiredPos);
-                    armSlideDesiredPos = setSignFromReference(200, armSlideDesiredPos);
-                }*/
-
-                // High basket preset
-                /*if ((gamepad1.right_trigger > 0.2 && gamepad1.left_trigger > 0.2) || gamepad2.right_trigger > 0.2) { // Both controller 1 triggers or controller 2 right trigger
-                    armPivotDesiredPos = setSignFromReference(2200, armPivotDesiredPos);
-                    armSlideDesiredPos = setSignFromReference(1650, armSlideDesiredPos);
-                }*/
-
-                // Outputs telemetry data to driver hub screen
-                // telemetry.addData("Arm Pivot Encoder Position :", armPivotMotor.getCurrentPosition());
-                // telemetry.addData("Arm Slide Encoder Position :", armSlideMotor.getCurrentPosition());
-                // telemetry.addData("Arm Slide Motor Power :", armSlideMotor.getPower());
-
-                //            telemetry.addData("Right Distance (mm): ", rightDistanceSensor.getDistance(DistanceUnit.MM));
-                //            telemetry.addData("Back Distance (mm): ", backDistanceSensor.getDistance(DistanceUnit.MM));
-                telemetry.addData("rmp flywheel: ", flywheelMotor.getPower());
+                telemetry.addData("flyweelRotate power: ", flywheelRotateMotor.getPower());
+                telemetry.addData("flywheel power: ", flywheelMotor.getPower());
                 telemetry.update();
             }
         }
