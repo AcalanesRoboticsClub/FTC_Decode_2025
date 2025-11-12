@@ -2,6 +2,7 @@
 
 package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.IMU;
@@ -14,7 +15,7 @@ import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.acmerobotics.roadrunner.ftc.Actions;
 
-@Autonomous
+@TeleOp
 public class odo12BallFarBlue extends LinearOpMode {
     DcMotor frontLeftMotor; // 1
     DcMotor backLeftMotor; // 0
@@ -53,21 +54,21 @@ public class odo12BallFarBlue extends LinearOpMode {
     public void shootThree()
     {
         // Intake balls into turret to shoot all 3
-        flywheelIntake.setPower(1);
+        flywheelIntake.setPower(0.6);
 
-        sleep(5000); // Wait for all 3 to shoot
+        sleep(4000); // Wait for all 3 to shoot
 
         flywheelIntake.setPower(0); // stop shooting but leave intake and flywheel running
     }
 
     @Override
     public void runOpMode() throws InterruptedException {
-        /*
+
         frontLeftMotor = hardwareMap.dcMotor.get("frontLeftMotor");
         backLeftMotor = hardwareMap.dcMotor.get("backLeftMotor");
         frontRightMotor = hardwareMap.dcMotor.get("frontRightMotor");
         backRightMotor = hardwareMap.dcMotor.get("backRightMotor");
-         */
+
 
         // Game Element Intake
         intakeLeft = hardwareMap.get(CRServo.class, "intakeLeft");
@@ -104,7 +105,7 @@ public class odo12BallFarBlue extends LinearOpMode {
         */
 
         // Setup odometry params
-        odo = hardwareMap.get(GoBildaPinpointDriver.class,"odo");
+        odo = hardwareMap.get(GoBildaPinpointDriver.class,"pinpoint");
         odo.setOffsets(0, 0, DistanceUnit.INCH); // <-------------------------------------------- NO IDEA WHAT THIS DOES AT ALL
         odo.setEncoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD);
         odo.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.FORWARD, GoBildaPinpointDriver.EncoderDirection.FORWARD);
@@ -114,7 +115,7 @@ public class odo12BallFarBlue extends LinearOpMode {
 
         // For RoadRunner pathing
         odo.setHeading(0, AngleUnit.DEGREES); // Set initial angle
-        Pose2d startPose = new Pose2d(-63, 12, Math.toRadians(0)); // starting coordinates and heading
+        Pose2d startPose = new Pose2d(-59, 12, Math.toRadians(0)); // starting coordinates and heading
         MecanumDrive drive = new MecanumDrive(hardwareMap, startPose);
 
         telemetry.addData("Status", "Initialized");
@@ -139,9 +140,11 @@ public class odo12BallFarBlue extends LinearOpMode {
             flywheelRotateMotor.setTargetPosition(0);
             flywheelRotateMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             flywheelRotateMotor.setPower(0.7);
-            flywheelRotateMotor.setTargetPosition(200);
-            flywheelAngle.setPosition(0.23); // Shooting angle for next far location
-            flywheelMotor.setPower(0.9); // For far location
+            flywheelRotateMotor.setTargetPosition(205);
+            flywheelAngle.setPosition(0.2); // Shooting angle for next far location
+            flywheelMotor.setPower(0.94); // For far location
+
+            sleep(2500); // warm up flywheel
 
             shootThree(); // from far location
 
@@ -152,7 +155,7 @@ public class odo12BallFarBlue extends LinearOpMode {
                     drive.actionBuilder(startPose)
                             .splineTo(new Vector2d(-48, 12), Math.toRadians(0)) // Drive strait forward
                             .splineTo(new Vector2d(-36, 24), Math.toRadians(90)) // curve toward close artifact row
-                            .splineTo(new Vector2d(-36, 40), Math.toRadians(90)) // drive forward to intake artifacts
+                            .splineTo(new Vector2d(-36, 56), Math.toRadians(90)) // drive forward to intake artifacts
                             .build());
 
             // go to center to shoot
@@ -161,8 +164,8 @@ public class odo12BallFarBlue extends LinearOpMode {
                             .splineTo(new Vector2d(0, 0), Math.toRadians(45)) // go to center and point at goal
                             .build());
 
-            flywheelMotor.setPower(0.8); // For middle location
-            flywheelAngle.setPosition(0.3); // Shooting angle for middle
+            flywheelMotor.setPower(0.82); // For middle location
+            flywheelAngle.setPosition(0.29); // Shooting angle for middle
 
             shootThree();
 
@@ -170,7 +173,7 @@ public class odo12BallFarBlue extends LinearOpMode {
             Actions.runBlocking(
                     drive.actionBuilder(drive.localizer.getPose())
                             .splineTo(new Vector2d(-12, 24), Math.toRadians(90)) // Face row and drive to front of it
-                            .splineTo(new Vector2d(-12, 40), Math.toRadians(90)) // drive forward to intake artifacts
+                            .splineTo(new Vector2d(-12, 44), Math.toRadians(90)) // drive forward to intake artifacts
                             .build());
 
             // go to center to shoot
@@ -185,14 +188,13 @@ public class odo12BallFarBlue extends LinearOpMode {
             Actions.runBlocking(
                     drive.actionBuilder(drive.localizer.getPose())
                             .splineTo(new Vector2d(12, 24), Math.toRadians(90)) // Face row and drive to front of it
-                            .splineTo(new Vector2d(12, 40), Math.toRadians(90)) // drive forward to intake artifacts
+                            .splineTo(new Vector2d(12, 44), Math.toRadians(90)) // drive forward to intake artifacts
                             .build());
 
             // Go to close/lobbing shooting position
             Actions.runBlocking(
                     drive.actionBuilder(drive.localizer.getPose())
-                            .splineTo(new Vector2d(12, 0), Math.toRadians(90)) // Face row and drive to front of it
-                            .splineTo(new Vector2d(36, 36), Math.toRadians(45)) // drive forward to intake artifacts
+                            .splineTo(new Vector2d(36, 30), Math.toRadians(45))
                             .build());
 
 
