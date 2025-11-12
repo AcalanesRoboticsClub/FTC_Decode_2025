@@ -12,16 +12,13 @@ import com.qualcomm.robotcore.hardware.Servo;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
-import org.firstinspires.ftc.robotcore.external.navigation.UnnormalizedAngleUnit;
-
 import java.util.Locale;
-
 import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.acmerobotics.roadrunner.ftc.Actions;
 
 @TeleOp
-public class odoAuto extends LinearOpMode {
+public class odo12BallFarBlue extends LinearOpMode {
     DcMotor frontLeftMotor; // 1
     DcMotor backLeftMotor; // 0
     DcMotor frontRightMotor; // 1 (expansion)
@@ -154,7 +151,8 @@ public class odoAuto extends LinearOpMode {
             flywheelRotateMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             flywheelRotateMotor.setPower(0.7);
             flywheelRotateMotor.setTargetPosition(200);
-            flywheelAngle.setPosition(0.23); // Shooting angle for next shot
+            flywheelAngle.setPosition(0.23); // Shooting angle for next far location
+            flywheelMotor.setPower(0.9); // For far location
 
             shootThree(); // from far location
 
@@ -169,13 +167,14 @@ public class odoAuto extends LinearOpMode {
                             .splineTo(new Vector2d(-36, 40), Math.toRadians(90)) // drive forward to intake artifacts
                             .build());
 
-            wait(500); // debugging? idk if this is needed
-
             // go to center to shoot
             Actions.runBlocking(
                     drive.actionBuilder(drive.localizer.getPose())
                             .splineTo(new Vector2d(0, 0), Math.toRadians(45)) // go to center and point at goal
                             .build());
+
+            flywheelMotor.setPower(0.8); // For middle location
+            flywheelAngle.setPosition(0.3); // Shooting angle for middle
 
             shootThree();
 
@@ -211,8 +210,16 @@ public class odoAuto extends LinearOpMode {
 
             flywheelAngle.setPosition(0); // Shooting angle for lobbing
             flywheelMotor.setPower(0.7); // power for lobbing
+
             shootThree();
 
+            // Get out of launch zone
+            Actions.runBlocking(
+                    drive.actionBuilder(drive.localizer.getPose())
+                            .splineTo(new Vector2d(24, 40), Math.toRadians(90)) // get out of launch zone
+                            .build());
+
+            StopAll();
         }
     }
 }
