@@ -1,58 +1,9 @@
-// Written primarily by Henry Rosenberg for AcaBots, FTC Team #24689
-// hi also sze ting
-// and Tsimur Havarko
-/*
--------------------- CONTROL SCHEME - CONTROLLER 1 --------------------
-Buttons:
-    A:
-    B:
-    X:
-    Y:
-
-D-Pad:
-    UP:
-    DOWN:
-    RIGHT:
-
-Triggers:
-    RT: Hold for Intake
-    LT: Hold for Reverse Intake
-    BOTH:
-
-Shoulder Buttons:
-    RB:
-    LB:
-
-Joysticks:
-    Right: Relative Chassis Rotation
-    Left: Absolute Chassis Strafe based on orientation when START button is pressed
-
--------------------- CONTROL SCHEME - CONTROLLER 2 --------------------
-Buttons:
-    A: Hold for Flywheel
-    B: Hold for Reverse Flywheel
-    Y:
-
-Triggers:
-    RT: Hold for Belts
-    LT: Hold for Reverse Belts
-
-Joysticks:
-    Right: Relative Chassis Rotation
-    Left: Absolute Chassis Strafe based on orientation when START button is pressed
-
- ---------------------------- START CONFIG ----------------------------
- Hanging Hooks: Open
- Arm Slide: Retracted
- Arm Pivot: Down, resting on bottom stop
- Claw Wrist: Folded left
- */
+// Written by AcaBots FTC team 24689 for the 2025-26 DECODE Season
 
 package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
-import com.qualcomm.robotcore.hardware.DistanceSensor;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
@@ -60,7 +11,7 @@ import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.hardware.Servo;
 
 @Autonomous
-public class autoFarBlue extends LinearOpMode {
+public class hardcodeFarAutoBlue extends LinearOpMode {
     DcMotor frontLeftMotor; // 1
     DcMotor backLeftMotor; // 0
     DcMotor frontRightMotor; // 1 (expansion)
@@ -70,36 +21,12 @@ public class autoFarBlue extends LinearOpMode {
     CRServo beltLeft; // 0
     CRServo beltRight; // 1 (expansion)
     CRServo beltVertical; // 2
-    //    CRServo turret; // 2 (expansion)
     DcMotor flywheelRotateMotor; // 2 (expansion)
     DcMotor flywheelMotor; // 2
     DcMotor flywheelIntake; // 3
     Servo flywheelAngle; // 2 (expansion)
-    // CRServo clawIntake;
     IMU imu;
-    DistanceSensor rightDistanceSensor;
-    DistanceSensor backDistanceSensor;
     double angle;
-
-
-    private double calcLargestChange(double a, double b) {
-        // Return the value of the greatest absolute value of either a or b. Used for dual controller input
-        if (Math.abs(b) > Math.abs(a)) {
-            return b;
-        } else {
-            return a;
-        }
-    }
-
-    private int setSignFromReference(int newAbsoluteValue, int signReference) {
-        // Return the value of newAbsoluteValue with the + or - sign of signReference. Used for teleOp presets
-        if (signReference <= 0) {
-            return -newAbsoluteValue;
-        } else {
-            return newAbsoluteValue;
-        }
-    }
-
 
     @Override
     public void runOpMode() throws InterruptedException {
@@ -139,19 +66,6 @@ public class autoFarBlue extends LinearOpMode {
                 RevHubOrientationOnRobot.UsbFacingDirection.RIGHT));
         // Without this, the REV Hub's orientation is assumed to be logo up / USB forward
         imu.initialize(parameters);
-
-        // Retrieve the IMU from the hardware map
-        //imu = hardwareMap.get(IMU.class, "imu");
-        // Adjust the orientation parameters to match your robot <------------------------------------------------------- IMPORTANT
-        /*IMU.Parameters parameters = new IMU.Parameters(new RevHubOrientationOnRobot(
-                RevHubOrientationOnRobot.LogoFacingDirection.FORWARD,
-                RevHubOrientationOnRobot.UsbFacingDirection.RIGHT));*/
-        // Without this, the REV Hub's orientation is assumed to be logo up / USB forward
-        //imu.initialize(parameters);
-
-        // Chassis-mounted distance sensors
-//        rightDistanceSensor = hardwareMap.get(DistanceSensor.class, "rightDistanceSensor");
-//        backDistanceSensor = hardwareMap.get(DistanceSensor.class, "backDistanceSensor");
 
         waitForStart();
         // 4. Drive forward for 1 second
@@ -248,11 +162,5 @@ public class autoFarBlue extends LinearOpMode {
             sleep(1000);
 
         }
-
-        //telemetry.addData("rmp flywheel: ", flywheelMotor.getPower());
-        //telemetry.addData("rotShot", rotShot.getPower());
-        //telemetry.update();
-
-
     }
 }
