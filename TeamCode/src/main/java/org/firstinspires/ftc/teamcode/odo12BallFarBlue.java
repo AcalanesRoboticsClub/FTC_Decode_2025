@@ -54,7 +54,7 @@ public class odo12BallFarBlue extends LinearOpMode {
     public void shootThree()
     {
         // Intake balls into turret to shoot all 3
-        flywheelIntake.setPower(0.6);
+        flywheelIntake.setPower(0.45);
 
         sleep(4000); // Wait for all 3 to shoot
 
@@ -129,9 +129,9 @@ public class odo12BallFarBlue extends LinearOpMode {
             flywheelRotateMotor.setTargetPosition(0);
             flywheelRotateMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             flywheelRotateMotor.setPower(0.7);
-            flywheelRotateMotor.setTargetPosition(220);
+            flywheelRotateMotor.setTargetPosition(215);
             flywheelAngle.setPosition(0.2); // Shooting angle for next far location
-            flywheelMotor.setPower(0.96); // For far location
+            flywheelMotor.setPower(0.9); // For far location
 
             sleep(2200); // warm up flywheel
 
@@ -142,39 +142,39 @@ public class odo12BallFarBlue extends LinearOpMode {
             // Pickup first row of artifacts
             Actions.runBlocking(
                     drive.actionBuilder(startPose)
-                            //.splineTo(new Vector2d(48, -12), Math.toRadians(180)) // Drive strait forward
                             .splineTo(new Vector2d(36, -20), Math.toRadians(270)) // curve toward close artifact row
-                            .lineToYConstantHeading(-56) // drive forward to intake artifacts
+                            .lineToYConstantHeading(-58) // drive forward to intake artifacts
                             .build());
 
-            flywheelRotateMotor.setTargetPosition(-480); // set turret to 45deg for next shots
+            flywheelRotateMotor.setTargetPosition(-450); // set turret to 45deg for next shots
+            sleep(200); // chill for ball to be sucked in
 
             // reverse out and go to center
             Actions.runBlocking(
                     drive.actionBuilder(drive.localizer.getPose())
-                            .lineToYConstantHeading(-20)
-                            .strafeTo(new Vector2d(-18, -12)) // go to center-ish and point at goal
-                            .turnTo(Math.toRadians(270))
+                            .lineToYConstantHeading(-24)
+                            .strafeToConstantHeading(new Vector2d(-12, -6)) // go to center-ish and point at goal
                             .build());
 
-            flywheelMotor.setPower(0.8); // For middle location
-            flywheelAngle.setPosition(0.26); // Shooting angle for middle
+            flywheelMotor.setPower(0.78); // For middle location
+            flywheelAngle.setPosition(0.2); // Shooting angle for middle
 
             shootThree();
 
             // Pickup middle row of artifacts
             Actions.runBlocking(
                     drive.actionBuilder(drive.localizer.getPose())
-                            .splineTo(new Vector2d(12, -20), Math.toRadians(270)) // Face row and drive to front of it
-                            .lineToYConstantHeading(-56) // drive forward to intake artifacts
+                            .splineToConstantHeading(new Vector2d(12, -20), Math.toRadians(270)) // Face row and drive to front of it
+                            .lineToYConstantHeading(-58) // drive forward to intake artifacts
                             .build());
+
+            sleep(200); // chill for ball to be sucked in
 
             // reverse out and go to center
             Actions.runBlocking(
                     drive.actionBuilder(drive.localizer.getPose())
-                            .lineToYConstantHeading(-20)
-                            .strafeTo(new Vector2d(-18, -12)) // go to center-ish and point at goal
-                            .turnTo(Math.toRadians(270))
+                            .lineToYConstantHeading(-24)
+                            .strafeToConstantHeading(new Vector2d(-12, -6)) // go to center-ish and point at goal
                             .build());
 
 
@@ -183,16 +183,15 @@ public class odo12BallFarBlue extends LinearOpMode {
             // Pickup far row of artifacts
             Actions.runBlocking(
                     drive.actionBuilder(drive.localizer.getPose())
-                            .splineTo(new Vector2d(-12, -20), Math.toRadians(270)) // Face row and drive to front of it
-                            .lineToYConstantHeading(-48) // drive forward to intake artifacts
+                            .lineToYConstantHeading(-53) // drive forward to intake artifacts
                             .build());
+
+            sleep(200); // chill for ball to be sucked in
 
             // reverse out and go to center
             Actions.runBlocking(
                     drive.actionBuilder(drive.localizer.getPose())
-                            .lineToYConstantHeading(-20)
-                            .strafeTo(new Vector2d(-18, -12)) // go to center-ish and point at goal
-                            .turnTo(Math.toRadians(270))
+                            .lineToYConstantHeading(-6)
                             .build());
 
             shootThree();
