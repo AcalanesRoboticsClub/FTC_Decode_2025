@@ -204,7 +204,7 @@ public class odo12BallFarBlue extends LinearOpMode {
                     drive.actionBuilder(drive.localizer.getPose())
                             .strafeTo(new Vector2d(-24, -48)) // get out of launch zone
                             .build());
-            StopAll();//
+            StopAll();
         }
     }
 }
