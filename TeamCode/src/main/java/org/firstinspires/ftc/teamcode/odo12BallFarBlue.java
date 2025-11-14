@@ -147,6 +147,8 @@ public class odo12BallFarBlue extends LinearOpMode {
                             .build());
 
             flywheelRotateMotor.setTargetPosition(-450); // set turret to 45deg for next shots
+            flywheelMotor.setPower(0.78); // For middle location
+            flywheelAngle.setPosition(0.2); // Shooting angle for middle
             sleep(200); // chill for ball to be sucked in
 
             // reverse out and go to center
@@ -155,9 +157,6 @@ public class odo12BallFarBlue extends LinearOpMode {
                             .lineToYConstantHeading(-24)
                             .strafeToConstantHeading(new Vector2d(-12, -6)) // go to center-ish and point at goal
                             .build());
-
-            flywheelMotor.setPower(0.78); // For middle location
-            flywheelAngle.setPosition(0.2); // Shooting angle for middle
 
             shootThree();
 
