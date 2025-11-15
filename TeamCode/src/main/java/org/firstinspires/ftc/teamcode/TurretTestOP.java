@@ -55,6 +55,7 @@ import androidx.annotation.NonNull;
 
 import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
+import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.qualcomm.hardware.rev.Rev2mDistanceSensor;
@@ -122,6 +123,7 @@ public class TurretTestOP extends LinearOpMode{
     double yawError = 0;
 
 //    PIDController pid = new PIDController(kP, kI, kD);
+    FtcDashboard dashboard = FtcDashboard.getInstance();
 
     private double calcLargestChange(double a, double b) {
         // Return the value of the greatest absolute value of either a or b. Used for dual controller input
@@ -296,6 +298,13 @@ public class TurretTestOP extends LinearOpMode{
 //                    telemetry.addData("PID Output", pidOutput);
 //                }
                 telemetry.addData("flyweelRotate: ", flywheelRotateMotor.getPower());
+
+                TelemetryPacket packet = new TelemetryPacket();
+                packet.put("error", yawError);
+                packet.put("kP", PARAMS.kP);
+                packet.put("kI", PARAMS.kI);
+                packet.put("kD", PARAMS.kD);
+                FtcDashboard.getInstance().sendTelemetryPacket(packet);
 
 //                flywheelRotateMotor.setPower(pid.calculate(flywheelRotateMotor.getCurrentPosition(), setpoint));
 
