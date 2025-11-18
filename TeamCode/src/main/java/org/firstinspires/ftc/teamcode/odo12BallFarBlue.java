@@ -15,7 +15,7 @@ import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.acmerobotics.roadrunner.ftc.Actions;
 
-@TeleOp
+@TeleOp // should be changed to autonomous as soon as it can run in <30 secs
 public class odo12BallFarBlue extends LinearOpMode {
     DcMotor frontLeftMotor; // 1
     DcMotor backLeftMotor; // 0
@@ -147,7 +147,7 @@ public class odo12BallFarBlue extends LinearOpMode {
                             .build());
 
             flywheelRotateMotor.setTargetPosition(-450); // set turret to 45deg for next shots
-            flywheelMotor.setPower(0.78); // For middle location
+            flywheelMotor.setPower(0.76); // For middle location
             flywheelAngle.setPosition(0.2); // Shooting angle for middle
             sleep(200); // chill for ball to be sucked in
 
