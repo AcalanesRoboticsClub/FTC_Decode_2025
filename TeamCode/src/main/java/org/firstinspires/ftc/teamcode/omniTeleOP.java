@@ -246,19 +246,19 @@ public class omniTeleOP extends LinearOpMode{
 
                 if (gamepad1.dpad_up || gamepad2.dpad_up) { // CLOSEST (touching wall)
                     angle = 0;
-                    flywheelSpeedMultiplier = 0.62;
+                    flywheelSpeedMultiplier = 0.66;
                 }
                 if (gamepad1.dpad_left || gamepad2.dpad_left) { // CLOSE (centered on closer triangle)
-                    angle = 0.25;
-                    flywheelSpeedMultiplier = 0.8;
+                    angle = 0.28;
+                    flywheelSpeedMultiplier = 0.82;
                 }
                 if (gamepad1.dpad_down || gamepad2.dpad_down) { // FAR (centered on top of triangle)
                     angle = 0.23;
                     flywheelSpeedMultiplier = 0.92;
                 }
                 if (gamepad1.dpad_right || gamepad2.dpad_right) { // CLOSE (other setting)
-                    angle = 0.33;
-                    flywheelSpeedMultiplier = 0.8;
+                    angle = 0.28;
+                    flywheelSpeedMultiplier = 0.76;
                 }
                 // angle is between 0 and 0.4
                 flywheelAngle.setPosition(angle);
