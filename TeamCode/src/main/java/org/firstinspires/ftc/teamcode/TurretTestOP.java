@@ -128,7 +128,10 @@ public class TurretTestOP extends LinearOpMode{
     double targetYaw = 0;
     double yawError = 0;
 
-//    PIDController pid = new PIDController(kP, kI, kD);
+    double lastTurretAngle = 0;
+    double lastRobotAngle = 0;
+
+    //    PIDController pid = new PIDController(kP, kI, kD);
     FtcDashboard dashboard = FtcDashboard.getInstance();
 
     private double calcLargestChange(double a, double b) {
