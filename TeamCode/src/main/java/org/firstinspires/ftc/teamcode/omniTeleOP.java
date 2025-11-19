@@ -13,6 +13,7 @@ D-Pad:
     RIGHT: Middle launch zone preset, low angle
     LEFT: Middle launch zone preset, high angle
 
+
 Triggers:
     RT: Turret rotate right
     LT: Turret rotate left
