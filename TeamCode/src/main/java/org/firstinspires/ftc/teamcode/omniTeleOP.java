@@ -141,6 +141,51 @@ public class omniTeleOP extends LinearOpMode{
                 .setCameraResolution(new Size(640, 480))
                 .build();
 
+
+
+        // Hardware Definitions. Must match names setup in robot configuration in the driver hub. config is created and selected selected with driver hub menu
+        // Drive Motors
+        frontLeftMotor = hardwareMap.dcMotor.get("frontLeftMotor");
+        backLeftMotor = hardwareMap.dcMotor.get("backLeftMotor");
+        frontRightMotor = hardwareMap.dcMotor.get("frontRightMotor");
+        backRightMotor = hardwareMap.dcMotor.get("backRightMotor");
+
+        // Game Element Intake
+        intakeLeft = hardwareMap.get(CRServo.class, "intakeLeft");
+        intakeRight = hardwareMap.get(CRServo.class, "intakeRight");
+
+        // Belts to connect intake and flywheel
+        beltLeft = hardwareMap.get(CRServo.class, "beltLeft");
+        beltRight = hardwareMap.get(CRServo.class, "beltRight");
+        beltVertical = hardwareMap.get(CRServo.class, "beltVertical");
+
+        // Reverse some belts
+        intakeLeft.setDirection(CRServo.Direction.REVERSE);
+        beltLeft.setDirection(CRServo.Direction.REVERSE);
+
+        // Flywheel Motor and Rotation
+        flywheelRotateMotor = hardwareMap.dcMotor.get("rotatShot");
+        flywheelRotateMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        flywheelRotateMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        flywheelRotateMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        flywheelMotor = hardwareMap.dcMotor.get("flywheelMotor");
+        flywheelIntake = hardwareMap.dcMotor.get("flywheelIntake");
+        flywheelAngle = hardwareMap.get(Servo.class, "flywheelAngle");
+
+        // Reverse some of the drive motors depending on physical setup
+        frontLeftMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+        backLeftMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+        //        flywheelMotor.setDirection(DcMotorSimple.Direction.REVERSE);
+
+        // Retrieve the IMU from the hardware map
+        imu = hardwareMap.get(IMU.class, "imu");
+        // Adjust the orientation parameters to match your robot <------------------------------------------------------- IMPORTANT
+        IMU.Parameters parameters = new IMU.Parameters(new RevHubOrientationOnRobot(
+                RevHubOrientationOnRobot.LogoFacingDirection.LEFT,
+                RevHubOrientationOnRobot.UsbFacingDirection.UP));
+        // Without this, the REV Hub's orientation is assumed to be logo up / USB forward
+        imu.initialize(parameters);
+
         waitForStart();
 
         while (!isStopRequested() && opModeIsActive()) {
@@ -308,163 +353,141 @@ public class omniTeleOP extends LinearOpMode{
                     }
                 }
 
+            if (max > 1.0) {
+                frontLeftPower /= max;
+                frontRightPower /= max;
+                backLeftPower /= max;
+                backRightPower /= max;
+            }
+
+            frontLeftMotor.setPower(frontLeftPower);
+            backLeftMotor.setPower(backLeftPower);
+            frontRightMotor.setPower(frontRightPower);
+            backRightMotor.setPower(backRightPower);
+
+            telemetry.addData("vals", "%4.2f, %4.2f, %4.2f", y, x, rx);
+            telemetry.addData("Front left/Right", "%4.2f, %4.2f", frontLeftPower, frontRightPower);
+            telemetry.addData("Back  left/Right", "%4.2f, %4.2f", backLeftPower, backRightPower);
+
+
+            // Controller 1 Intake
+            if (gamepad1.aWasPressed() || gamepad2.aWasPressed()) {
                 if (intakeToggle) {
-                    intakeLeft.setPower(1);
-                    intakeRight.setPower(1);
-                    beltLeft.setPower(1);
-                    beltRight.setPower(1);
-                    beltVertical.setPower(-1);
-                } else if (gamepad1.back || gamepad2.back) { // reverse all intake + flywheel intake in emergency
-                    intakeLeft.setPower(-1);
-                    intakeRight.setPower(-1);
-                    beltLeft.setPower(-1);
-                    beltRight.setPower(-1);
-                    beltVertical.setPower(1);
-                    flywheelIntake.setPower(-1);
+                    intakeToggle = false;
                 } else {
-                    intakeLeft.setPower(0);
-                    intakeRight.setPower(0);
-                    beltLeft.setPower(0);
-                    beltRight.setPower(0);
-                    beltVertical.setPower(0);
+                    intakeToggle = true;
                 }
+            }
 
-                // Flywheel
-                if (toggleSlowerShoot) {
-                    flywheelSpeedMultiplier = SLOWER_SPEED_MULTIPLIER;
-                } else {
-                    flywheelSpeedMultiplier = 1;
-                }
+            if (intakeToggle) {
+                intakeLeft.setPower(1);
+                intakeRight.setPower(1);
+                beltLeft.setPower(1);
+                beltRight.setPower(1);
+                beltVertical.setPower(-1);
+            } else if (gamepad1.back || gamepad2.back) { // reverse all intake + flywheel intake in emergency
+                intakeLeft.setPower(-1);
+                intakeRight.setPower(-1);
+                beltLeft.setPower(-1);
+                beltRight.setPower(-1);
+                beltVertical.setPower(1);
+                flywheelIntake.setPower(-1);
+            } else {
+                intakeLeft.setPower(0);
+                intakeRight.setPower(0);
+                beltLeft.setPower(0);
+                beltRight.setPower(0);
+                beltVertical.setPower(0);
+            }
 
-                if (gamepad1.right_bumper || gamepad2.right_bumper) {
-                    flywheelMotor.setPower(1 * flywheelSpeedMultiplier);
-                } else {
-                    flywheelMotor.setPower(0);
-                }
 
-                if (gamepad1.left_bumper || gamepad2.left_bumper) {
-                    flywheelIntake.setPower(1);
-                } else {
-                    flywheelIntake.setPower(0);
-                }
 
-                if (gamepad1.dpad_up || gamepad2.dpad_up) { // CLOSEST (touching wall)
-                    angle = 0;
-                    toggleSlowerShoot = true;
-                }
-                if (gamepad1.dpad_left || gamepad2.dpad_left) { // CLOSE (centered on closer triangle)
-                    angle = 0.3;
-                    toggleSlowerShoot = false;
-                }
-                if (gamepad1.dpad_down || gamepad2.dpad_down) { // FAR (centered on top of triangle)
-                    angle = 0.25;
-                    toggleSlowerShoot = false;
-                }
-                if (gamepad1.dpad_right || gamepad2.dpad_right) { // CLOSE (other setting)
-                    angle = 0.34;
-                    toggleSlowerShoot = false;
-                }
-                // angle is between 0 and 0.4
-                flywheelAngle.setPosition(angle);
-                telemetry.addData("flywheel position: ", flywheelAngle.getPosition());
+            if (gamepad1.right_bumper || gamepad2.right_bumper) {
+                flywheelMotor.setPower(1 * flywheelSpeedMultiplier);
+            } else {
+                flywheelMotor.setPower(0);
+            }
 
-                // FLYWHEEL AUTO-AIMING
-                telemetry.addData("data", tagProcessor.getDetections());
-                if (!tagProcessor.getDetections().isEmpty()) {
-                    AprilTagDetection tag = tagProcessor.getDetections().get(0);
+            if (gamepad1.left_bumper || gamepad2.left_bumper) {
+                flywheelIntake.setPower(1);
+            } else {
+                flywheelIntake.setPower(0);
+            }
+
+            if (gamepad1.dpad_up || gamepad2.dpad_up) { // CLOSEST (touching wall)
+                angle = 0;
+                flywheelSpeedMultiplier = 0.66;
+            }
+            if (gamepad1.dpad_left || gamepad2.dpad_left) { // CLOSE (centered on closer triangle)
+                angle = 0.28;
+                flywheelSpeedMultiplier = 0.82;
+            }
+            if (gamepad1.dpad_down || gamepad2.dpad_down) { // FAR (centered on top of triangle)
+                angle = 0.23;
+                flywheelSpeedMultiplier = 0.92;
+            }
+            if (gamepad1.dpad_right || gamepad2.dpad_right) { // CLOSE (other setting)
+                angle = 0.28;
+                flywheelSpeedMultiplier = 0.76;
+            }
+            // angle is between 0 and 0.4
+            flywheelAngle.setPosition(angle);
+            telemetry.addData("flywheel position: ", flywheelAngle.getPosition());
+
+            // FLYWHEEL AUTO-AIMING
+            telemetry.addData("data", tagProcessor.getDetections());
+            if (!tagProcessor.getDetections().isEmpty()) {
+                AprilTagDetection tag = tagProcessor.getDetections().get(0);
+                telemetry.addData("yaw", tag.ftcPose.yaw);
+            }
+            if (!tagProcessor.getDetections().isEmpty() && (gamepad1.b || gamepad2.b)) {
+                AprilTagDetection tag = tagProcessor.getDetections().get(0);
+                telemetry.addData("id", tag.id);
+                if (tag.id == 20 || tag.id == 19) {
+                    telemetry.addData("x", tag.ftcPose.x);
+                    telemetry.addData("y", tag.ftcPose.y);
+                    telemetry.addData("z", tag.ftcPose.z);
+                    telemetry.addData("roll", tag.ftcPose.roll);
+                    telemetry.addData("pitch", tag.ftcPose.pitch);
                     telemetry.addData("yaw", tag.ftcPose.yaw);
-                }
-                if (!tagProcessor.getDetections().isEmpty() && (gamepad1.b || gamepad2.b)) {
-                    AprilTagDetection tag = tagProcessor.getDetections().get(0);
-                    telemetry.addData("id", tag.id);
-                    if (tag.id == 20 || tag.id == 19) {
-                        telemetry.addData("x", tag.ftcPose.x);
-                        telemetry.addData("y", tag.ftcPose.y);
-                        telemetry.addData("z", tag.ftcPose.z);
-                        telemetry.addData("roll", tag.ftcPose.roll);
-                        telemetry.addData("pitch", tag.ftcPose.pitch);
-                        telemetry.addData("yaw", tag.ftcPose.yaw);
 
-                        // yaw can be like -50 to 50
-                        if (tag.ftcPose.yaw > 15 && flywheelRotateMotor.getCurrentPosition() < FLYWHEEL_ROTATE_MAX) {
-                            flywheelRotateMotor.setPower(0.5);
-                        }
-                        else if (tag.ftcPose.yaw > 10 && flywheelRotateMotor.getCurrentPosition() < FLYWHEEL_ROTATE_MAX) {
-                            flywheelRotateMotor.setPower(0.3);
-                        }
-                        else if (tag.ftcPose.yaw > 7.8 && flywheelRotateMotor.getCurrentPosition() < FLYWHEEL_ROTATE_MAX) {
-                            flywheelRotateMotor.setPower(0.1);
-                        }
-                        if (tag.ftcPose.yaw < -4 && flywheelRotateMotor.getCurrentPosition() > FLYWHEEL_ROTATE_MIN) {
-                            flywheelRotateMotor.setPower(-0.5);
-                        }
-                        else if (tag.ftcPose.yaw < 4 && flywheelRotateMotor.getCurrentPosition() > FLYWHEEL_ROTATE_MIN) {
-                            flywheelRotateMotor.setPower(-0.3);
-                        }
-                        else if (tag.ftcPose.yaw < 6.8 && flywheelRotateMotor.getCurrentPosition() > FLYWHEEL_ROTATE_MIN) {
-                            flywheelRotateMotor.setPower(-0.1);
-                        }
-                        if (tag.ftcPose.yaw < 7.8 && tag.ftcPose.yaw > 6.8) {
-                            flywheelRotateMotor.setPower(0);
-                        }
+                    // yaw can be like -50 to 50
+                    if (tag.ftcPose.yaw > 15 && flywheelRotateMotor.getCurrentPosition() < FLYWHEEL_ROTATE_MAX) {
+                        flywheelRotateMotor.setPower(0.5);
                     }
-                }
-                else {
-                    if (!(gamepad1.b || gamepad2.b) && (gamepad1.left_trigger > 0.1 || gamepad2.left_trigger > 0.1) && flywheelRotateMotor.getCurrentPosition() < FLYWHEEL_ROTATE_MAX) {
-                        flywheelRotateMotor.setPower(gamepad1.left_trigger * 0.85);
-                    } else if (!(gamepad1.b || gamepad2.b) && (gamepad1.right_trigger > 0.1 || gamepad2.right_trigger > 0.1) && flywheelRotateMotor.getCurrentPosition() > FLYWHEEL_ROTATE_MIN) {
-                        flywheelRotateMotor.setPower(gamepad1.right_trigger * -0.85);
-                    } else {
+                    else if (tag.ftcPose.yaw > 10 && flywheelRotateMotor.getCurrentPosition() < FLYWHEEL_ROTATE_MAX) {
+                        flywheelRotateMotor.setPower(0.3);
+                    }
+                    else if (tag.ftcPose.yaw > 7.8 && flywheelRotateMotor.getCurrentPosition() < FLYWHEEL_ROTATE_MAX) {
+                        flywheelRotateMotor.setPower(0.1);
+                    }
+                    if (tag.ftcPose.yaw < -4 && flywheelRotateMotor.getCurrentPosition() > FLYWHEEL_ROTATE_MIN) {
+                        flywheelRotateMotor.setPower(-0.5);
+                    }
+                    else if (tag.ftcPose.yaw < 4 && flywheelRotateMotor.getCurrentPosition() > FLYWHEEL_ROTATE_MIN) {
+                        flywheelRotateMotor.setPower(-0.3);
+                    }
+                    else if (tag.ftcPose.yaw < 6.8 && flywheelRotateMotor.getCurrentPosition() > FLYWHEEL_ROTATE_MIN) {
+                        flywheelRotateMotor.setPower(-0.1);
+                    }
+                    if (tag.ftcPose.yaw < 7.8 && tag.ftcPose.yaw > 6.8) {
                         flywheelRotateMotor.setPower(0);
                     }
-                    telemetry.addData("flywheel rotate: ", flywheelRotateMotor.getCurrentPosition());
                 }
-                telemetry.addData("flyweelRotate: ", flywheelRotateMotor.getPower());
-
-                // Controller 1 Arm Slide
-                // encoder directions become negative depending on motor directions
-                /*int armSlidePos = armSlideMotor.getCurrentPosition(); // current position of the slide, used to prevent overextension/going past 0
-                if(gamepad1.dpad_up && (Math.abs(armSlidePos) <= armSlideSoftLimit)) { // 2000 is hardcoded end stop
-                    armSlideMotor.setPower(1); // extend continuously while button is held
-                    armSlideMotor.setDirection(DcMotor.Direction.REVERSE);
-                    armSlideMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-                    armSlideDesiredPos = armSlideMotor.getCurrentPosition();
-                    armSlideLastMoveDirection = true; // forward
-                } else if (gamepad1.dpad_down && (armSlideLastMoveDirection || Math.abs(armSlidePos) >= 50 )) { // encoder pos is inverted when in reverse; so it just checks to make sure it isn't within 35 of zero (due to belt slop)
-                    armSlideMotor.setPower(1);  // retract continuously while button is held
-                    armSlideMotor.setDirection(DcMotor.Direction.FORWARD);
-                    armSlideMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER); // Use builtin PID loop to run to position
-                    armSlideDesiredPos = armSlideMotor.getCurrentPosition(); // store current position in case the button isn't pressed next loop, so it knows where to hold
-                    armSlideLastMoveDirection = false; // backward
-                } else {
-                    armSlideMotor.setTargetPosition(armSlideDesiredPos); // hold the motor at the position it was in last time it was moved
-                    armSlideMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION); // Use builtin PID loop to hold position
-                    armSlideMotor.setPower(armSlideHoldingPower); // Holding power
-                }*/
-
-
-                // Transport Mode
-                /*if (gamepad1.y || gamepad2.y) {
-                    armPivotDesiredPos = setSignFromReference(700, armPivotDesiredPos);
-                    armSlideDesiredPos = setSignFromReference(200, armSlideDesiredPos);
-                }*/
-
-                // High basket preset
-                /*if ((gamepad1.right_trigger > 0.2 && gamepad1.left_trigger > 0.2) || gamepad2.right_trigger > 0.2) { // Both controller 1 triggers or controller 2 right trigger
-                    armPivotDesiredPos = setSignFromReference(2200, armPivotDesiredPos);
-                    armSlideDesiredPos = setSignFromReference(1650, armSlideDesiredPos);
-                }*/
-
-                // Outputs telemetry data to driver hub screen
-                // telemetry.addData("Arm Pivot Encoder Position :", armPivotMotor.getCurrentPosition());
-                // telemetry.addData("Arm Slide Encoder Position :", armSlideMotor.getCurrentPosition());
-                // telemetry.addData("Arm Slide Motor Power :", armSlideMotor.getPower());
-
-                //            telemetry.addData("Right Distance (mm): ", rightDistanceSensor.getDistance(DistanceUnit.MM));
-                //            telemetry.addData("Back Distance (mm): ", backDistanceSensor.getDistance(DistanceUnit.MM));
-                telemetry.addData("rmp flywheel: ", flywheelMotor.getPower());
-                telemetry.update();
             }
+            else {
+                if (!(gamepad1.b || gamepad2.b) && (gamepad1.left_trigger > 0.1 || gamepad2.left_trigger > 0.1) && flywheelRotateMotor.getCurrentPosition() < FLYWHEEL_ROTATE_MAX) {
+                    flywheelRotateMotor.setPower(gamepad1.left_trigger * 0.85);
+                } else if (!(gamepad1.b || gamepad2.b) && (gamepad1.right_trigger > 0.1 || gamepad2.right_trigger > 0.1) && flywheelRotateMotor.getCurrentPosition() > FLYWHEEL_ROTATE_MIN) {
+                    flywheelRotateMotor.setPower(gamepad1.right_trigger * -0.85);
+                } else {
+                    flywheelRotateMotor.setPower(0);
+                }
+                telemetry.addData("flywheel rotate: ", flywheelRotateMotor.getCurrentPosition());
+            }
+            telemetry.addData("flyweelRotate power: ", flywheelRotateMotor.getPower());
+            telemetry.addData("flywheel power: ", flywheelMotor.getPower());
+            telemetry.update();
         }
     }
 }
