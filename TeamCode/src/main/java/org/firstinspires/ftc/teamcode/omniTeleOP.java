@@ -46,6 +46,8 @@ import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 
+import java.util.List;
+
 @TeleOp
 public class omniTeleOP extends LinearOpMode{
     int FLYWHEEL_ROTATE_MAX = 1350;
@@ -279,13 +281,14 @@ public class omniTeleOP extends LinearOpMode{
             telemetry.addData("flywheel position: ", flywheelAngle.getPosition());
 
             // FLYWHEEL AUTO-AIMING
+            List<AprilTagDetection> rawDetections = tagProcessor.getDetections();
             telemetry.addData("data", tagProcessor.getDetections());
-            if (!tagProcessor.getDetections().isEmpty()) {
+            if (!(rawDetections.size() == 0) && !(rawDetections == null)) {
                 AprilTagDetection tag = tagProcessor.getDetections().get(0);
                 telemetry.addData("yaw", tag.ftcPose.yaw);
             }
-            if (!tagProcessor.getDetections().isEmpty() && (gamepad1.b || gamepad2.b)) {
-                AprilTagDetection tag = tagProcessor.getDetections().get(0);
+            if (!(rawDetections.size() == 0) && !(rawDetections == null) && (gamepad1.b || gamepad2.b)) {
+                AprilTagDetection tag = rawDetections.get(0);
                 telemetry.addData("id", tag.id);
                 if (tag.id == 20 || tag.id == 19) {
                     telemetry.addData("x", tag.ftcPose.x);
