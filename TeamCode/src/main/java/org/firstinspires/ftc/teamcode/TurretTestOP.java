@@ -54,6 +54,7 @@ import android.util.Size;
 import androidx.annotation.NonNull;
 
 import com.acmerobotics.dashboard.canvas.Canvas;
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
@@ -91,6 +92,13 @@ DRIVER SCHEMA:
 
 @TeleOp @Config
 public class TurretTestOP extends LinearOpMode{
+    public static double normDelta(double angle) {
+        angle = angle % 360;
+        if (angle > 180) angle -= 360;
+        if (angle < -180) angle += 360;
+        return angle;
+    }
+
     int FLYWHEEL_ROTATE_MAX = 1300;
     int FLYWHEEL_ROTATE_MIN = -1750;
     double SLOWER_SPEED_MULTIPLIER = 0.77;
@@ -121,6 +129,7 @@ public class TurretTestOP extends LinearOpMode{
         public double kP = 0.02;
         public double kI = -0.000045;
         public double kD = 0;
+        public double kF = 0.005;
     }
     public static Params PARAMS = new Params();
     double integralSum = 0;
@@ -132,8 +141,16 @@ public class TurretTestOP extends LinearOpMode{
 
     double turretAngle = 0.0;
     double robotAngle = 0.0;
+    double lastRobotAngle = 0.0;
     double angleDiff = 0.0;
     double pidOutput = 0.0;
+    // low pass filter vars
+    double lpfYaw = 0;
+    boolean lpfInit = false;
+    double ALPHA = 0.1;   // smoothing gain
+
+    // 1D Kalman Filter
+    KalmanFilter1D yawFilter = new KalmanFilter1D(0.01, 2.0);
 
     //    PIDController pid = new PIDController(kP, kI, kD);
     FtcDashboard dashboard = FtcDashboard.getInstance();
@@ -186,12 +203,6 @@ public class TurretTestOP extends LinearOpMode{
                 .setDrawTagOutline(true)
                 .build();
 
-        VisionPortal visionPortal = new VisionPortal.Builder()
-                .addProcessor(tagProcessor)
-                .setCamera(hardwareMap.get(WebcamName.class, "Webcam 1"))
-                .setCameraResolution(new Size(640, 480))
-                .build();
-
         // SET UP ODOMETRY
         odo = hardwareMap.get(GoBildaPinpointDriver.class,"pinpoint");
         odo.setOffsets(0, 0, DistanceUnit.INCH); // <-------------------------------------------- NO IDEA WHAT THIS DOES AT ALL
@@ -237,7 +248,16 @@ public class TurretTestOP extends LinearOpMode{
         // Without this, the REV Hub's orientation is assumed to be logo up / USB forward
         imu.initialize(parameters);
 
+        VisionPortal visionPortal = new VisionPortal.Builder()
+                .addProcessor(tagProcessor)
+                .setCamera(hardwareMap.get(WebcamName.class, "Webcam 1"))
+                .setCameraResolution(new Size(640, 480))
+                .build();
+
         waitForStart();
+
+        timer.reset();
+        double previousRobotHeading = odo.getHeading(AngleUnit.DEGREES);
 
         while (!isStopRequested() && opModeIsActive()) {
             // test to find ratio - do later
@@ -342,17 +362,37 @@ public class TurretTestOP extends LinearOpMode{
                 flywheelRotateMotor.setPower(-0.2);
             }
             else if (!(rawDetections.size() == 0) && !(rawDetections == null)) {
+
                 // angle of turret and robots
                 double TICKS_PER_REV_TURRET = 537.7;  // * 7.2?
                 double turretAngle = (flywheelRotateMotor.getCurrentPosition() / TICKS_PER_REV_TURRET) * 360.0;
-                robotAngle = odo.getHeading(AngleUnit.DEGREES);
                 angleDiff = turretAngle - robotAngle;
+                double actualTurretWorldAngle = turretAngle + robotAngle;
+
+                robotAngle = odo.getHeading(AngleUnit.DEGREES);
+                double robotAngularVelocity = normDelta(robotAngle - lastRobotAngle) / timer.seconds();
+                lastRobotAngle = robotAngle;
+
 
                 AprilTagDetection tag = rawDetections.get(0);
-                yaw = tag.ftcPose.yaw;
+                double rawYaw = tag.ftcPose.yaw;
+                double filteredYaw = yawFilter.update(rawYaw);
+                // initialize filter on first frame
+                if (!lpfInit) {
+                    lpfYaw = filteredYaw;
+                    lpfInit = true;
+                }
+
+                // Low-pass filter update
+                lpfYaw = lpfYaw + ALPHA * (filteredYaw - lpfYaw);
+
+                // use filtered yaw
+                yaw = -lpfYaw;
                 targetYaw = 0.0;
 //                yawError = targetYaw - yaw;
-                error = angleDiff + (yaw - targetYaw);
+                double targetTurretWorldAngle = robotAngle + yaw;
+//                double targetWorldYaw = robotAngle - yaw;   // negative because tag yaw flips direction
+                error = normDelta(targetTurretWorldAngle - actualTurretWorldAngle);
 
                 integralSum += error * timer.seconds();
                 double derivative = (error - lastError) / timer.seconds();
@@ -369,7 +409,9 @@ public class TurretTestOP extends LinearOpMode{
                 timer.reset();
 
                 pidOutput = (error * PARAMS.kP) + (derivative * actual_kD) + (integralSum * PARAMS.kI);
-                flywheelRotateMotor.setPower(-pidOutput);
+                double turretFeedforward = -PARAMS.kF * robotAngularVelocity;
+                double finalOutput = pidOutput + turretFeedforward;
+                flywheelRotateMotor.setPower(-finalOutput);
                 telemetry.addData("error", error);
                 telemetry.addData("PID Output", pidOutput);
             }
@@ -396,6 +438,7 @@ public class TurretTestOP extends LinearOpMode{
             packet.put("kP", PARAMS.kP);
             packet.put("kI", PARAMS.kI);
             packet.put("kD", PARAMS.kD);
+            packet.put("kF", PARAMS.kD);
             packet.put("turret angle", turretAngle);
             packet.put("robot angle", robotAngle);
             packet.put("angleDiff", angleDiff);
@@ -409,5 +452,41 @@ public class TurretTestOP extends LinearOpMode{
             telemetry.addData("rmp flywheel: ", flywheelMotor.getPower());
             telemetry.update();
         }
+    }
+}
+
+class KalmanFilter1D {
+    private double Q;  // Process noise covariance
+    private double R;  // Measurement noise covariance
+    private double x;  // State estimate
+    private double P;  // Estimate covariance
+    private boolean initialized = false;
+
+    public KalmanFilter1D(double Q, double R) {
+        this.Q = Q;   // small
+        this.R = R;   // bigger
+    }
+
+    public double update(double measurement) {
+        if (!initialized) {
+            x = measurement;
+            P = 1;
+            initialized = true;
+            return x;
+        }
+
+        // Prediction step
+        P = P + Q;
+
+        // Kalman Gain
+        double K = P / (P + R);
+
+        // Update step
+        x = x + K * (measurement - x);
+
+        // Update covariance
+        P = (1 - K) * P;
+
+        return x;
     }
 }
