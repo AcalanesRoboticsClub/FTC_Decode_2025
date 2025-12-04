@@ -27,7 +27,6 @@ public class MeepMeepTest {
                         .turn(Math.toRadians(90))
                         .build());
 
-
         meepMeep.setBackground(ImageIO.read(MeepMeepTest.class.getClassLoader().getResourceAsStream("decodeField.png")))
                 .setDarkMode(true)
                 .setBackgroundAlpha(0.95f)
