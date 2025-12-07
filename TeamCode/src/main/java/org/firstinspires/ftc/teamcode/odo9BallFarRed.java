@@ -104,7 +104,7 @@ public class odo9BallFarRed extends LinearOpMode {
 
         // For RoadRunner pathing
         odo.setHeading(180, AngleUnit.DEGREES); // Set initial angle
-        Pose2d startPose = new Pose2d(58, 12, Math.toRadians(180)); // starting coordinates and heading
+        Pose2d startPose = new Pose2d(65, 6, Math.toRadians(180)); // starting coordinates and heading
         MecanumDrive drive = new MecanumDrive(hardwareMap, startPose);
 
         telemetry.addData("Status", "Initialized");
@@ -142,6 +142,7 @@ public class odo9BallFarRed extends LinearOpMode {
             // Pickup first row of artifacts
             Actions.runBlocking(
                     drive.actionBuilder(drive.localizer.getPose())
+                            .setReversed(false)
                             .splineTo(new Vector2d(36, 20), Math.toRadians(90)) // curve toward close artifact row
                             .lineToYConstantHeading(58) // drive forward to intake artifacts
                             .build());
@@ -155,7 +156,7 @@ public class odo9BallFarRed extends LinearOpMode {
             Actions.runBlocking(
                     drive.actionBuilder(drive.localizer.getPose())
                             .lineToYConstantHeading(24)
-                            .setReversed(true) // make the spline more sensible
+                            .setReversed(false) // make the spline more sensible
                             .splineToConstantHeading(new Vector2d(-16, 12), Math.toRadians(90)) // go to halfway
                             .splineToConstantHeading(new Vector2d(-12, 6), Math.toRadians(90)) // go to center-ish and point at goal
                             .build());
@@ -165,9 +166,9 @@ public class odo9BallFarRed extends LinearOpMode {
             // Pickup middle row of artifacts
             Actions.runBlocking(
                     drive.actionBuilder(drive.localizer.getPose())
-                            .setReversed(false) // make the spline more sensible
+                            .setReversed(true) // make the spline more sensible
                             .splineToConstantHeading(new Vector2d(12, 20), Math.toRadians(90)) // Face row and drive to front of it
-                            .lineToYConstantHeading(-58) // drive forward to intake artifacts
+                            .lineToYConstantHeading(58) // drive forward to intake artifacts
                             .build());
 
             sleep(200); // chill for ball to be sucked in
@@ -176,7 +177,7 @@ public class odo9BallFarRed extends LinearOpMode {
             Actions.runBlocking(
                     drive.actionBuilder(drive.localizer.getPose())
                             .lineToYConstantHeading(24)
-                            .setReversed(true) // make the spline more sensible
+                            .setReversed(false) // make the spline more sensible
                             .splineToConstantHeading(new Vector2d(-12, 6), Math.toRadians(90)) // go to center-ish and point at goal
                             .build());
 
