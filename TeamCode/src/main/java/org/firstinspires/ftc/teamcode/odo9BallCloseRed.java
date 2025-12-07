@@ -79,6 +79,7 @@ public class odo9BallCloseRed extends LinearOpMode {
 
         // Flywheel Motor and Rotation
         flywheelRotateMotor = hardwareMap.dcMotor.get("rotatShot");
+        flywheelRotateMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         flywheelMotor = hardwareMap.dcMotor.get("flywheelMotor");
         flywheelIntake = hardwareMap.dcMotor.get("flywheelIntake");
         flywheelAngle = hardwareMap.get(Servo.class, "flywheelAngle");
