@@ -2,8 +2,10 @@
 
 package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
+import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
@@ -14,7 +16,7 @@ import com.acmerobotics.roadrunner.Vector2d;
 import com.acmerobotics.roadrunner.ftc.Actions;
 
 @Autonomous
-public class odo9BallCloseBlue extends LinearOpMode {
+public class odo9BallFarRed extends LinearOpMode {
     DcMotor frontLeftMotor; // 1
     DcMotor backLeftMotor; // 0
     DcMotor frontRightMotor; // 1 (expansion)
@@ -28,7 +30,11 @@ public class odo9BallCloseBlue extends LinearOpMode {
     DcMotor flywheelMotor; // 2
     DcMotor flywheelIntake; // 3
     Servo flywheelAngle; // 2 (expansion)
+    IMU imu;
+
+    double angle;
     GoBildaPinpointDriver odo;
+    double oldTime = 0;
 
     public void StopAll() {
         intakeLeft.setPower(0);
@@ -48,9 +54,9 @@ public class odo9BallCloseBlue extends LinearOpMode {
     public void shootThree()
     {
         // Intake balls into turret to shoot all 3
-        flywheelIntake.setPower(0.57);
+        flywheelIntake.setPower(0.5);
 
-        sleep(4000); // Wait for all 3 to shoot
+        sleep(3800); // Wait for all 3 to shoot
 
         flywheelIntake.setPower(0); // stop shooting but leave intake and flywheel running
     }
@@ -98,7 +104,7 @@ public class odo9BallCloseBlue extends LinearOpMode {
 
         // For RoadRunner pathing
         odo.setHeading(180, AngleUnit.DEGREES); // Set initial angle
-        Pose2d startPose = new Pose2d(-66, -28, Math.toRadians(180)); // starting coordinates and heading
+        Pose2d startPose = new Pose2d(58, 12, Math.toRadians(180)); // starting coordinates and heading
         MecanumDrive drive = new MecanumDrive(hardwareMap, startPose);
 
         telemetry.addData("Status", "Initialized");
@@ -123,71 +129,66 @@ public class odo9BallCloseBlue extends LinearOpMode {
             flywheelRotateMotor.setTargetPosition(0);
             flywheelRotateMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             flywheelRotateMotor.setPower(0.7);
-            flywheelRotateMotor.setTargetPosition(-460);
-            flywheelAngle.setPosition(0.1); // Shooting angle for lobbing
-            flywheelMotor.setPower(0.71); // For lobbing
+            flywheelRotateMotor.setTargetPosition(-217);
+            flywheelAngle.setPosition(0.23); // Shooting angle for next far location
+            flywheelMotor.setPower(0.92); // For far location
 
-            // Go to center shoot location
+            sleep(2200); // warm up flywheel
+
+            shootThree(); // from far location
+
+            flywheelRotateMotor.setTargetPosition(0); // Return turret to center for next shots
+
+            // Pickup first row of artifacts
             Actions.runBlocking(
-                    drive.actionBuilder(startPose)
-                            .setReversed(true) // no one knows what this does???!?!?!??
-                            .strafeTo(new Vector2d(-36, -36)) // go to center-ish and point at goal
-                            .turnTo(Math.toRadians(270))
+                    drive.actionBuilder(drive.localizer.getPose())
+                            .splineTo(new Vector2d(36, 20), Math.toRadians(90)) // curve toward close artifact row
+                            .lineToYConstantHeading(58) // drive forward to intake artifacts
+                            .build());
+
+            flywheelRotateMotor.setTargetPosition(450); // set turret to 45deg for next shots
+            flywheelMotor.setPower(0.76); // For middle location
+            flywheelAngle.setPosition(0.2); // Shooting angle for middle
+            sleep(200); // chill for ball to be sucked in
+
+            // reverse out and go to center
+            Actions.runBlocking(
+                    drive.actionBuilder(drive.localizer.getPose())
+                            .lineToYConstantHeading(24)
+                            .setReversed(true) // make the spline more sensible
+                            .splineToConstantHeading(new Vector2d(-16, 12), Math.toRadians(90)) // go to halfway
+                            .splineToConstantHeading(new Vector2d(-12, 6), Math.toRadians(90)) // go to center-ish and point at goal
                             .build());
 
             shootThree();
 
-            // Pickup far row of artifacts
-            Actions.runBlocking(
-                    drive.actionBuilder(drive.localizer.getPose())
-                            .setReversed(true) // no one knows what this does???!?!?!??
-                            .splineToConstantHeading(new Vector2d(-12, -20), Math.toRadians(90)) // Face row and drive to front of it
-                            .lineToYConstantHeading(-56) // drive forward to intake artifacts
-                            .build());
-
-
-            // Go to center shoot location
-            Actions.runBlocking(
-                    drive.actionBuilder(drive.localizer.getPose())
-                            .setReversed(true) // no one knows what this does???!?!?!??
-                            .lineToYConstantHeading(-24) // back off the wall
-                            .strafeTo(new Vector2d(-36, -36)) // go to center-ish and point at goal
-                            .build());
-
-            shootThree();
-
-            // GO to middle row
-            Actions.runBlocking(
-                    drive.actionBuilder(drive.localizer.getPose())
-                            .setReversed(true) // no one knows what this does???!?!?!??
-                            .splineToConstantHeading(new Vector2d(12, -20), Math.toRadians(90)) // Face row and drive to front of it
-                            //.lineToYConstantHeading(-64) // drive forward to intake artifacts
-                            .build());
             // Pickup middle row of artifacts
             Actions.runBlocking(
                     drive.actionBuilder(drive.localizer.getPose())
-                            .lineToYConstantHeading(-64) // drive forward to intake artifacts
+                            .setReversed(false) // make the spline more sensible
+                            .splineToConstantHeading(new Vector2d(12, 20), Math.toRadians(90)) // Face row and drive to front of it
+                            .lineToYConstantHeading(-58) // drive forward to intake artifacts
                             .build());
 
+            sleep(200); // chill for ball to be sucked in
 
-            // Go to center shoot location
+            // reverse out and go to center
             Actions.runBlocking(
                     drive.actionBuilder(drive.localizer.getPose())
-                            .setReversed(true) // no one knows what this does???!?!?!??
-                            .lineToYConstantHeading(-24) // back off the wall
-                            .strafeTo(new Vector2d(-36, -36)) // go to center-ish and point at goal
+                            .lineToYConstantHeading(24)
+                            .setReversed(true) // make the spline more sensible
+                            .splineToConstantHeading(new Vector2d(-12, 6), Math.toRadians(90)) // go to center-ish and point at goal
                             .build());
 
             shootThree();
+
             flywheelRotateMotor.setTargetPosition(0); // Return turret to center
 
-            // Go to gate
+            // Get out of launch zone
             Actions.runBlocking(
                     drive.actionBuilder(drive.localizer.getPose())
-                            .setReversed(true) // no one knows what this does???!?!?!??
-                            .splineToConstantHeading(new Vector2d(0, -40), Math.toRadians(90)) // Easy to hit gate
+                            .lineToYConstantHeading(53) // get out of launch zone and pickup next row
                             .build());
-
             StopAll();
         }
     }
