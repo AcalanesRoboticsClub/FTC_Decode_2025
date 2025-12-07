@@ -98,7 +98,7 @@ public class odo9BallCloseRed extends LinearOpMode {
 
         // For RoadRunner pathing
         odo.setHeading(180, AngleUnit.DEGREES); // Set initial angle
-        Pose2d startPose = new Pose2d(-66, 28, Math.toRadians(180)); // starting coordinates and heading
+        Pose2d startPose = new Pose2d(-59, 23, Math.toRadians(180)); // starting coordinates and heading
         MecanumDrive drive = new MecanumDrive(hardwareMap, startPose);
 
         telemetry.addData("Status", "Initialized");
@@ -123,9 +123,9 @@ public class odo9BallCloseRed extends LinearOpMode {
             flywheelRotateMotor.setTargetPosition(0);
             flywheelRotateMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             flywheelRotateMotor.setPower(0.7);
-            flywheelRotateMotor.setTargetPosition(460);
+            flywheelRotateMotor.setTargetPosition(425);
             flywheelAngle.setPosition(0.1); // Shooting angle for lobbing
-            flywheelMotor.setPower(0.71); // For lobbing
+            flywheelMotor.setPower(0.67); // For lobbing
 
             // Go to center shoot location
             Actions.runBlocking(
@@ -160,8 +160,7 @@ public class odo9BallCloseRed extends LinearOpMode {
             Actions.runBlocking(
                     drive.actionBuilder(drive.localizer.getPose())
                             .setReversed(true) // no one knows what this does???!?!?!??
-                            .splineToConstantHeading(new Vector2d(12, 20), Math.toRadians(270)) // Face row and drive to front of it
-                            //.lineToYConstantHeading(64) // drive forward to intake artifacts
+                            .splineToConstantHeading(new Vector2d(10, 20), Math.toRadians(270)) // Face row and drive to front of it
                             .build());
             // Pickup middle row of artifacts
             Actions.runBlocking(
@@ -175,7 +174,7 @@ public class odo9BallCloseRed extends LinearOpMode {
                     drive.actionBuilder(drive.localizer.getPose())
                             .setReversed(true) // no one knows what this does???!?!?!??
                             .lineToYConstantHeading(24) // back off the wall
-                            .strafeTo(new Vector2d(-36, 36)) // go to center-ish and point at goal
+                            .splineTo(new Vector2d(-36, 36),Math.toRadians(270)) // go to center-ish and point at goal
                             .build());
 
             shootThree();
