@@ -46,10 +46,12 @@ import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 
+import java.util.List;
+
 @TeleOp
 public class omniTeleOP extends LinearOpMode{
     int FLYWHEEL_ROTATE_MAX = 1350;
-    int FLYWHEEL_ROTATE_MIN = -2150;
+    int FLYWHEEL_ROTATE_MIN = -2100;
     boolean intakeToggle = false;
     double flywheelSpeedMultiplier = 1.0;
     DcMotor frontLeftMotor; // 1
@@ -260,19 +262,19 @@ public class omniTeleOP extends LinearOpMode{
 
             if (gamepad1.dpad_up || gamepad2.dpad_up) { // CLOSEST (touching wall)
                 angle = 0;
-                flywheelSpeedMultiplier = 0.66;
+                flywheelSpeedMultiplier = 0.65;
             }
             if (gamepad1.dpad_left || gamepad2.dpad_left) { // CLOSE (centered on closer triangle)
                 angle = 0.28;
-                flywheelSpeedMultiplier = 0.82;
+                flywheelSpeedMultiplier = 0.8;
             }
             if (gamepad1.dpad_down || gamepad2.dpad_down) { // FAR (centered on top of triangle)
                 angle = 0.23;
-                flywheelSpeedMultiplier = 0.92;
+                flywheelSpeedMultiplier = 0.9;
             }
             if (gamepad1.dpad_right || gamepad2.dpad_right) { // CLOSE (other setting)
                 angle = 0.28;
-                flywheelSpeedMultiplier = 0.76;
+                flywheelSpeedMultiplier = 0.72;
             }
             // angle is between 0 and 0.4
             flywheelAngle.setPosition(angle);
@@ -280,12 +282,13 @@ public class omniTeleOP extends LinearOpMode{
 
             // FLYWHEEL AUTO-AIMING
             telemetry.addData("data", tagProcessor.getDetections());
-            if (!tagProcessor.getDetections().isEmpty()) {
-                AprilTagDetection tag = tagProcessor.getDetections().get(0);
+            List<AprilTagDetection> rawDetections = tagProcessor.getDetections();
+            if (!(rawDetections.size() == 0) && !(rawDetections == null)) {
+                AprilTagDetection tag = rawDetections.get(0);
                 telemetry.addData("yaw", tag.ftcPose.yaw);
             }
-            if (!tagProcessor.getDetections().isEmpty() && (gamepad1.b || gamepad2.b)) {
-                AprilTagDetection tag = tagProcessor.getDetections().get(0);
+            if ((!(rawDetections.size() == 0) && !(rawDetections == null)) && (gamepad1.b || gamepad2.b)) {
+                AprilTagDetection tag = rawDetections.get(0);
                 telemetry.addData("id", tag.id);
                 if (tag.id == 20 || tag.id == 19) {
                     telemetry.addData("x", tag.ftcPose.x);

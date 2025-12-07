@@ -14,7 +14,7 @@ import com.acmerobotics.roadrunner.Vector2d;
 import com.acmerobotics.roadrunner.ftc.Actions;
 
 @Autonomous
-public class odo9BallCloseBlue extends LinearOpMode {
+public class odo9BallCloseRed extends LinearOpMode {
     DcMotor frontLeftMotor; // 1
     DcMotor backLeftMotor; // 0
     DcMotor frontRightMotor; // 1 (expansion)
@@ -98,7 +98,7 @@ public class odo9BallCloseBlue extends LinearOpMode {
 
         // For RoadRunner pathing
         odo.setHeading(180, AngleUnit.DEGREES); // Set initial angle
-        Pose2d startPose = new Pose2d(-66, -28, Math.toRadians(180)); // starting coordinates and heading
+        Pose2d startPose = new Pose2d(-66, 28, Math.toRadians(180)); // starting coordinates and heading
         MecanumDrive drive = new MecanumDrive(hardwareMap, startPose);
 
         telemetry.addData("Status", "Initialized");
@@ -123,7 +123,7 @@ public class odo9BallCloseBlue extends LinearOpMode {
             flywheelRotateMotor.setTargetPosition(0);
             flywheelRotateMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             flywheelRotateMotor.setPower(0.7);
-            flywheelRotateMotor.setTargetPosition(-460);
+            flywheelRotateMotor.setTargetPosition(460);
             flywheelAngle.setPosition(0.1); // Shooting angle for lobbing
             flywheelMotor.setPower(0.71); // For lobbing
 
@@ -131,8 +131,8 @@ public class odo9BallCloseBlue extends LinearOpMode {
             Actions.runBlocking(
                     drive.actionBuilder(startPose)
                             .setReversed(true) // no one knows what this does???!?!?!??
-                            .strafeTo(new Vector2d(-36, -36)) // go to center-ish and point at goal
-                            .turnTo(Math.toRadians(270))
+                            .strafeTo(new Vector2d(-36, 36)) // go to center-ish and point at goal
+                            .turnTo(Math.toRadians(90))
                             .build());
 
             shootThree();
@@ -141,8 +141,8 @@ public class odo9BallCloseBlue extends LinearOpMode {
             Actions.runBlocking(
                     drive.actionBuilder(drive.localizer.getPose())
                             .setReversed(true) // no one knows what this does???!?!?!??
-                            .splineToConstantHeading(new Vector2d(-12, -20), Math.toRadians(90)) // Face row and drive to front of it
-                            .lineToYConstantHeading(-56) // drive forward to intake artifacts
+                            .splineToConstantHeading(new Vector2d(-12, 20), Math.toRadians(270)) // Face row and drive to front of it
+                            .lineToYConstantHeading(56) // drive forward to intake artifacts
                             .build());
 
 
@@ -150,8 +150,8 @@ public class odo9BallCloseBlue extends LinearOpMode {
             Actions.runBlocking(
                     drive.actionBuilder(drive.localizer.getPose())
                             .setReversed(true) // no one knows what this does???!?!?!??
-                            .lineToYConstantHeading(-24) // back off the wall
-                            .strafeTo(new Vector2d(-36, -36)) // go to center-ish and point at goal
+                            .lineToYConstantHeading(24) // back off the wall
+                            .strafeTo(new Vector2d(-36, 36)) // go to center-ish and point at goal
                             .build());
 
             shootThree();
@@ -160,13 +160,13 @@ public class odo9BallCloseBlue extends LinearOpMode {
             Actions.runBlocking(
                     drive.actionBuilder(drive.localizer.getPose())
                             .setReversed(true) // no one knows what this does???!?!?!??
-                            .splineToConstantHeading(new Vector2d(12, -20), Math.toRadians(90)) // Face row and drive to front of it
-                            //.lineToYConstantHeading(-64) // drive forward to intake artifacts
+                            .splineToConstantHeading(new Vector2d(12, 20), Math.toRadians(270)) // Face row and drive to front of it
+                            //.lineToYConstantHeading(64) // drive forward to intake artifacts
                             .build());
             // Pickup middle row of artifacts
             Actions.runBlocking(
                     drive.actionBuilder(drive.localizer.getPose())
-                            .lineToYConstantHeading(-64) // drive forward to intake artifacts
+                            .lineToYConstantHeading(64) // drive forward to intake artifacts
                             .build());
 
 
@@ -174,8 +174,8 @@ public class odo9BallCloseBlue extends LinearOpMode {
             Actions.runBlocking(
                     drive.actionBuilder(drive.localizer.getPose())
                             .setReversed(true) // no one knows what this does???!?!?!??
-                            .lineToYConstantHeading(-24) // back off the wall
-                            .strafeTo(new Vector2d(-36, -36)) // go to center-ish and point at goal
+                            .lineToYConstantHeading(24) // back off the wall
+                            .strafeTo(new Vector2d(-36, 36)) // go to center-ish and point at goal
                             .build());
 
             shootThree();
@@ -185,7 +185,7 @@ public class odo9BallCloseBlue extends LinearOpMode {
             Actions.runBlocking(
                     drive.actionBuilder(drive.localizer.getPose())
                             .setReversed(true) // no one knows what this does???!?!?!??
-                            .splineToConstantHeading(new Vector2d(0, -40), Math.toRadians(90)) // Easy to hit gate
+                            .splineToConstantHeading(new Vector2d(0, 40), Math.toRadians(270)) // Easy to hit gate
                             .build());
 
             StopAll();
