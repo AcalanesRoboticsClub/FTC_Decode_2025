@@ -32,6 +32,8 @@ Same as controller 1, except turret rotation is disabled
 
 package org.firstinspires.ftc.teamcode;
 import android.util.Size;
+
+import com.acmerobotics.roadrunner.Pose2d;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.IMU;
@@ -42,6 +44,7 @@ import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.hardware.Servo;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
@@ -49,7 +52,7 @@ import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 import java.util.List;
 
 @TeleOp
-public class omniTeleOP extends LinearOpMode{
+public class omniIMUTeleOp extends LinearOpMode{
     int FLYWHEEL_ROTATE_MAX = 1350;
     int FLYWHEEL_ROTATE_MIN = -2100;
     boolean intakeToggle = false;
@@ -69,6 +72,8 @@ public class omniTeleOP extends LinearOpMode{
     Servo flywheelAngle; // 2 (expansion)
     IMU imu;
     double angle;
+
+    GoBildaPinpointDriver odo;
 
     private double calcLargestChange(double a, double b) {
         // Return the value of the greatest absolute value of either a or b. Used for dual controller input
@@ -140,11 +145,31 @@ public class omniTeleOP extends LinearOpMode{
         // Without this, the REV Hub's orientation is assumed to be logo up / USB forward
         imu.initialize(parameters);
 
+        // Setup odometry params
+        odo = hardwareMap.get(GoBildaPinpointDriver.class,"pinpoint");
+        odo.setOffsets(0, 0, DistanceUnit.INCH); // <-------------------------------------------- NO IDEA WHAT THIS DOES AT ALL
+        odo.setEncoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD);
+        odo.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.FORWARD, GoBildaPinpointDriver.EncoderDirection.FORWARD);
+
+        // Initialize odometry stuff when match starts
+        odo.resetPosAndIMU();
+
+        // For RoadRunner pathing
+        odo.setHeading(0, AngleUnit.DEGREES); // Set initial angle
+        Pose2d startPose = new Pose2d(0, 0, Math.toRadians(0)); // starting coordinates and heading
+        MecanumDrive drive = new MecanumDrive(hardwareMap, startPose);
+
+
         waitForStart();
 
         if (isStopRequested()) return;
 
         while (opModeIsActive()) {
+            odo.update();
+            // Get status of the odometry (error stuff)
+            telemetry.addData("Odometry Status: ", odo.getDeviceStatus());
+
+
             // Take whichever value is the most drastic change to use from either controller
             double y = calcLargestChange(-gamepad1.left_stick_y, -gamepad2.left_stick_y); // Y stick values are reported as inverted by the controller
             double x = calcLargestChange(gamepad1.left_stick_x, gamepad2.left_stick_x);
@@ -156,9 +181,15 @@ public class omniTeleOP extends LinearOpMode{
             if (gamepad1.options) {
                 imu.initialize(parameters);
                 imu.resetYaw();
+                odo.setHeading(0, AngleUnit.DEGREES);
             }
 
-            double botHeading = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
+            //double botHeading = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
+
+            double botHeading = odo.getHeading(AngleUnit.RADIANS);
+
+            telemetry.addData("Heading: ", botHeading);
+            telemetry.update();
 
             // Rotate the movement direction counter to the bot's rotation
             double rotX = x * Math.cos(-botHeading) - y * Math.sin(-botHeading);

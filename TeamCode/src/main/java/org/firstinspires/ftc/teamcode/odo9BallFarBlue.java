@@ -177,7 +177,7 @@ public class odo9BallFarBlue extends LinearOpMode {
                     drive.actionBuilder(drive.localizer.getPose())
                             .lineToYConstantHeading(-24)
                             .setReversed(true) // make the spline more sensible
-                            .splineToConstantHeading(new Vector2d(-12, -6), Math.toRadians(270)) // go to center-ish and point at goal
+                            .splineTo(new Vector2d(-12, -6), Math.toRadians(90)) // go to center-ish and point at goal
                             .build());
 
             shootThree();
