@@ -126,7 +126,7 @@ public class odo9BallCloseBlue extends LinearOpMode {
             flywheelRotateMotor.setPower(0.7);
             flywheelRotateMotor.setTargetPosition(-460);
             flywheelAngle.setPosition(0.1); // Shooting angle for lobbing
-            flywheelMotor.setPower(0.71); // For lobbing
+            flywheelMotor.setPower(0.67); // For lobbing
 
             // Go to center shoot location
             Actions.runBlocking(
@@ -143,9 +143,12 @@ public class odo9BallCloseBlue extends LinearOpMode {
                     drive.actionBuilder(drive.localizer.getPose())
                             .setReversed(true) // no one knows what this does???!?!?!??
                             .splineToConstantHeading(new Vector2d(-12, -20), Math.toRadians(90)) // Face row and drive to front of it
+                            .build());
+            Actions.runBlocking(
+                    drive.actionBuilder(drive.localizer.getPose())
+                            .turnTo(Math.toRadians(270))
                             .lineToYConstantHeading(-56) // drive forward to intake artifacts
                             .build());
-
 
             // Go to center shoot location
             Actions.runBlocking(
@@ -153,6 +156,7 @@ public class odo9BallCloseBlue extends LinearOpMode {
                             .setReversed(true) // no one knows what this does???!?!?!??
                             .lineToYConstantHeading(-24) // back off the wall
                             .strafeTo(new Vector2d(-36, -36)) // go to center-ish and point at goal
+                            .turnTo(Math.toRadians(270))
                             .build());
 
             shootThree();
@@ -161,12 +165,13 @@ public class odo9BallCloseBlue extends LinearOpMode {
             Actions.runBlocking(
                     drive.actionBuilder(drive.localizer.getPose())
                             .setReversed(true) // no one knows what this does???!?!?!??
-                            .splineToConstantHeading(new Vector2d(12, -20), Math.toRadians(90)) // Face row and drive to front of it
-                            //.lineToYConstantHeading(-64) // drive forward to intake artifacts
+                            .splineToConstantHeading(new Vector2d(12, -20), Math.toRadians(270)) // Face row and drive to front of it
+
                             .build());
             // Pickup middle row of artifacts
             Actions.runBlocking(
                     drive.actionBuilder(drive.localizer.getPose())
+                            .turnTo(Math.toRadians(270))
                             .lineToYConstantHeading(-64) // drive forward to intake artifacts
                             .build());
 
