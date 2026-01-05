@@ -37,6 +37,7 @@ import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.hardware.Servo;
@@ -64,9 +65,10 @@ public class omniTeleOP extends LinearOpMode{
     CRServo beltRight; // 1 (expansion)
     CRServo beltVertical; // 2
     DcMotor flywheelRotateMotor; // 2 (expansion)
-    DcMotor flywheelMotor; // 2
+    DcMotorEx flywheelMotor; // 2
     DcMotor flywheelIntake; // 3
     Servo flywheelAngle; // 2 (expansion)
+    Servo ledIndicator;
     IMU imu;
     double angle;
 
@@ -113,6 +115,8 @@ public class omniTeleOP extends LinearOpMode{
         beltRight = hardwareMap.get(CRServo.class, "beltRight");
         beltVertical = hardwareMap.get(CRServo.class, "beltVertical");
 
+        ledIndicator = hardwareMap.get(Servo.class, "led"); // RGB Led headlight/debug light
+
         // Reverse some belts
         intakeLeft.setDirection(CRServo.Direction.REVERSE);
         beltLeft.setDirection(CRServo.Direction.REVERSE);
@@ -122,7 +126,8 @@ public class omniTeleOP extends LinearOpMode{
         flywheelRotateMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         flywheelRotateMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         flywheelRotateMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-        flywheelMotor = hardwareMap.dcMotor.get("flywheelMotor");
+        flywheelMotor = hardwareMap.get(DcMotorEx.class, "flywheelMotor");
+        flywheelMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         flywheelIntake = hardwareMap.dcMotor.get("flywheelIntake");
         flywheelAngle = hardwareMap.get(Servo.class, "flywheelAngle");
 
@@ -231,6 +236,7 @@ public class omniTeleOP extends LinearOpMode{
                 beltLeft.setPower(1);
                 beltRight.setPower(1);
                 beltVertical.setPower(-1);
+
             } else if (gamepad1.back || gamepad2.back) { // reverse all intake + flywheel intake in emergency
                 intakeLeft.setPower(-1);
                 intakeRight.setPower(-1);
@@ -258,6 +264,14 @@ public class omniTeleOP extends LinearOpMode{
                 flywheelIntake.setPower(1);
             } else {
                 flywheelIntake.setPower(0);
+            }
+
+            // Control the indicator light
+            if(flywheelMotor.getVelocity() > 1650)
+            {
+                ledIndicator.setPosition(0.5); // green
+            } else {
+                ledIndicator.setPosition(0.28); // red
             }
 
             if (gamepad1.dpad_up || gamepad2.dpad_up) { // CLOSEST (touching wall)
@@ -333,7 +347,7 @@ public class omniTeleOP extends LinearOpMode{
                 telemetry.addData("flywheel rotate: ", flywheelRotateMotor.getCurrentPosition());
             }
             telemetry.addData("flyweelRotate power: ", flywheelRotateMotor.getPower());
-            telemetry.addData("flywheel power: ", flywheelMotor.getPower());
+            telemetry.addData("flywheel velocity: ", flywheelMotor.getVelocity());
             telemetry.update();
         }
     }
