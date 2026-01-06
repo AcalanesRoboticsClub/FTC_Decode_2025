@@ -55,6 +55,7 @@ public class omniTeleOP extends LinearOpMode{
     int FLYWHEEL_ROTATE_MIN = -2100;
     boolean intakeToggle = false;
     double flywheelSpeedMultiplier = 1.0;
+    double flywheelVelocitySet = 0;
     DcMotor frontLeftMotor; // 1
     DcMotor backLeftMotor; // 0
     DcMotor frontRightMotor; // 1 (expansion)
@@ -127,7 +128,7 @@ public class omniTeleOP extends LinearOpMode{
         flywheelRotateMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         flywheelRotateMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
         flywheelMotor = hardwareMap.get(DcMotorEx.class, "flywheelMotor");
-        flywheelMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        flywheelMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         flywheelIntake = hardwareMap.dcMotor.get("flywheelIntake");
         flywheelAngle = hardwareMap.get(Servo.class, "flywheelAngle");
 
@@ -255,7 +256,8 @@ public class omniTeleOP extends LinearOpMode{
 
 
             if (gamepad1.right_bumper || gamepad2.right_bumper) {
-                flywheelMotor.setPower(1 * flywheelSpeedMultiplier);
+                //flywheelMotor.setPower(1 * flywheelSpeedMultiplier);
+                flywheelMotor.setVelocity(flywheelVelocitySet);
             } else {
                 flywheelMotor.setPower(0);
             }
@@ -267,28 +269,32 @@ public class omniTeleOP extends LinearOpMode{
             }
 
             // Control the indicator light
-            if(flywheelMotor.getVelocity() > 1650)
+            if(flywheelMotor.getVelocity() > flywheelVelocitySet - 100) // under speed
             {
                 ledIndicator.setPosition(0.5); // green
-            } else {
+            } else if (flywheelVelocitySet != 0) {
                 ledIndicator.setPosition(0.28); // red
             }
 
             if (gamepad1.dpad_up || gamepad2.dpad_up) { // CLOSEST (touching wall)
                 angle = 0;
                 flywheelSpeedMultiplier = 0.66;
+                flywheelVelocitySet = 1500;
             }
             if (gamepad1.dpad_left || gamepad2.dpad_left) { // CLOSE (centered on closer triangle)
                 angle = 0.28;
                 flywheelSpeedMultiplier = 0.8;
+                flywheelVelocitySet = 1800;
             }
             if (gamepad1.dpad_down || gamepad2.dpad_down) { // FAR (centered on top of triangle)
                 angle = 0.23;
                 flywheelSpeedMultiplier = 0.9;
+                flywheelVelocitySet = 2200;
             }
             if (gamepad1.dpad_right || gamepad2.dpad_right) { // CLOSE (other setting)
                 angle = 0.26;
                 flywheelSpeedMultiplier = 0.86;
+                flywheelVelocitySet = 1950;
             }
             // angle is between 0 and 0.4
             flywheelAngle.setPosition(angle);
