@@ -32,6 +32,8 @@ Same as controller 1, except turret rotation is disabled
 
 package org.firstinspires.ftc.teamcode;
 import android.util.Size;
+
+import com.acmerobotics.roadrunner.Pose2d;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.IMU;
@@ -43,6 +45,7 @@ import com.qualcomm.hardware.rev.RevHubOrientationOnRobot;
 import com.qualcomm.robotcore.hardware.Servo;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
@@ -51,8 +54,8 @@ import java.util.List;
 
 @TeleOp
 public class omniTeleOP extends LinearOpMode{
-    int FLYWHEEL_ROTATE_MAX = 1350;
-    int FLYWHEEL_ROTATE_MIN = -2100;
+    int FLYWHEEL_ROTATE_MAX = 1450;
+    int FLYWHEEL_ROTATE_MIN = -2050;
     boolean intakeToggle = false;
     double flywheelSpeedMultiplier = 1.0;
     double flywheelVelocitySet = 0;
@@ -71,6 +74,7 @@ public class omniTeleOP extends LinearOpMode{
     Servo flywheelAngle; // 2 (expansion)
     Servo ledIndicator;
     IMU imu;
+    GoBildaPinpointDriver odo;
     double angle;
 
     private double calcLargestChange(double a, double b) {
@@ -80,6 +84,10 @@ public class omniTeleOP extends LinearOpMode{
         } else {
             return a;
         }
+    }
+
+    public double expo(double input, double exponent) { // for scaled non linear throttle curve driving
+        return Math.signum(input) * Math.pow(Math.abs(input), exponent);
     }
 
     @Override
@@ -135,7 +143,6 @@ public class omniTeleOP extends LinearOpMode{
         // Reverse some of the drive motors depending on physical setup
         frontLeftMotor.setDirection(DcMotorSimple.Direction.REVERSE);
         backLeftMotor.setDirection(DcMotorSimple.Direction.REVERSE);
-        //        flywheelMotor.setDirection(DcMotorSimple.Direction.REVERSE);
 
         // Retrieve the IMU from the hardware map
         imu = hardwareMap.get(IMU.class, "imu");
@@ -146,15 +153,28 @@ public class omniTeleOP extends LinearOpMode{
         // Without this, the REV Hub's orientation is assumed to be logo up / USB forward
         imu.initialize(parameters);
 
+        // Setup odometry params
+        odo = hardwareMap.get(GoBildaPinpointDriver.class,"pinpoint");
+        odo.setOffsets(0, 0, DistanceUnit.INCH); // <-------------------------------------------- NO IDEA WHAT THIS DOES AT ALL
+        odo.setEncoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD);
+        odo.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.FORWARD, GoBildaPinpointDriver.EncoderDirection.FORWARD);
+
+        // Initialize odometry stuff when match starts
+        odo.resetPosAndIMU();
+
+        // For RoadRunner pathing
+        odo.setHeading(0, AngleUnit.DEGREES); // Set initial angle
+        Pose2d startPose = new Pose2d(0, 0, Math.toRadians(0)); // starting coordinates and heading
+        MecanumDrive drive = new MecanumDrive(hardwareMap, startPose);
+
+
+
         waitForStart();
 
         if (isStopRequested()) return;
 
         while (opModeIsActive()) {
-            // Take whichever value is the most drastic change to use from either controller
-            double y = calcLargestChange(-gamepad1.left_stick_y, -gamepad2.left_stick_y); // Y stick values are reported as inverted by the controller
-            double x = calcLargestChange(gamepad1.left_stick_x, gamepad2.left_stick_x);
-            double rx = calcLargestChange(gamepad1.right_stick_x, gamepad2.right_stick_x);
+            odo.update();
 
             // This button choice was made so that it is hard to hit on accident,
             // it can be freely changed based on preference.
@@ -162,60 +182,49 @@ public class omniTeleOP extends LinearOpMode{
             if (gamepad1.options) {
                 imu.initialize(parameters);
                 imu.resetYaw();
+                odo.setHeading(0, AngleUnit.DEGREES);
             }
 
-            double botHeading = imu.getRobotYawPitchRollAngles().getYaw(AngleUnit.RADIANS);
+            // ===== Adjustable expo values =====
+            double driveExpo = 1.5;   // 1.0 = linear, 2.0 = quadratic, 3.0 = very soft center
+            double turnExpo  = 1.5;
+
+
+            // ===== Read & scale driver input =====
+            double x  = expo(calcLargestChange(gamepad1.left_stick_x, gamepad2.left_stick_x), driveExpo);
+            double y  = expo(calcLargestChange(-gamepad1.left_stick_y, -gamepad2.left_stick_y), driveExpo); // negative = forward
+            double rx = expo(calcLargestChange(gamepad1.right_stick_x, gamepad2.right_stick_x), turnExpo);
+
+            // ===== Field-centric math =====
+            double botHeading = -odo.getHeading(AngleUnit.RADIANS);
 
             // Rotate the movement direction counter to the bot's rotation
-            double rotX = x * Math.cos(-botHeading) - y * Math.sin(-botHeading);
-            double rotY = x * Math.sin(-botHeading) + y * Math.cos(-botHeading);
+            double rotX = x * Math.cos(botHeading) - y * Math.sin(botHeading);
+            double rotY = x * Math.sin(botHeading) + y * Math.cos(botHeading);
 
-            rotX = rotX * 1.1;  // Counteract imperfect strafing
+            rotX *= 1.1;  // Counteract imperfect strafing
 
             // Denominator is the largest motor power (absolute value) or 1
-            // This ensures all the powers maintain the same ratio,
-            // but only if at least one is out of the range [-1, 1]
             double denominator = Math.max(Math.abs(rotY) + Math.abs(rotX) + Math.abs(rx), 1);
 
-            double frontLeftPower = (rotY + rotX + rx) / denominator;
-            double backLeftPower = (rotY - rotX + rx) / denominator;
+            double frontLeftPower  = (rotY + rotX + rx) / denominator;
+            double backLeftPower   = (rotY - rotX + rx) / denominator;
             double frontRightPower = (rotY - rotX - rx) / denominator;
-            double backRightPower = (rotY + rotX - rx) / denominator;
+            double backRightPower  = (rotY + rotX - rx) / denominator;
 
-
+            // ===== Normalize =====
             double max = Math.max(Math.abs(frontLeftPower), Math.abs(frontRightPower));
             max = Math.max(max, Math.abs(backLeftPower));
             max = Math.max(max, Math.abs(backRightPower));
 
             if (max > 1.0) {
-                frontLeftPower /= max;
+                frontLeftPower  /= max;
                 frontRightPower /= max;
-                backLeftPower /= max;
-                backRightPower /= max;
+                backLeftPower   /= max;
+                backRightPower  /= max;
             }
 
-            frontLeftMotor.setPower(frontLeftPower);
-            backLeftMotor.setPower(backLeftPower);
-            frontRightMotor.setPower(frontRightPower);
-            backRightMotor.setPower(backRightPower);
-
-            telemetry.addData("vals", "%4.2f, %4.2f, %4.2f", y, x, rx);
-            telemetry.addData("Front left/Right", "%4.2f, %4.2f", frontLeftPower, frontRightPower);
-            telemetry.addData("Back  left/Right", "%4.2f, %4.2f", backLeftPower, backRightPower);
-
-
-            // Controller 1 Intake
-            if (gamepad1.aWasPressed() || gamepad2.aWasPressed()) {
-                intakeToggle = !intakeToggle;
-            }
-
-            if (max > 1.0) {
-                frontLeftPower /= max;
-                frontRightPower /= max;
-                backLeftPower /= max;
-                backRightPower /= max;
-            }
-
+            // ===== Apply power =====
             frontLeftMotor.setPower(frontLeftPower);
             backLeftMotor.setPower(backLeftPower);
             frontRightMotor.setPower(frontRightPower);
@@ -294,7 +303,7 @@ public class omniTeleOP extends LinearOpMode{
             if (gamepad1.dpad_right || gamepad2.dpad_right) { // CLOSE (other setting)
                 angle = 0.26;
                 flywheelSpeedMultiplier = 0.86;
-                flywheelVelocitySet = 1950;
+                flywheelVelocitySet = 1920;
             }
             // angle is between 0 and 0.4
             flywheelAngle.setPosition(angle);
@@ -343,16 +352,29 @@ public class omniTeleOP extends LinearOpMode{
                 }
             }
             else {
-                if (!(gamepad1.b || gamepad2.b) && (gamepad1.left_trigger > 0.1 || gamepad2.left_trigger > 0.1) && flywheelRotateMotor.getCurrentPosition() < FLYWHEEL_ROTATE_MAX) {
-                    flywheelRotateMotor.setPower(gamepad1.left_trigger * 0.85);
-                } else if (!(gamepad1.b || gamepad2.b) && (gamepad1.right_trigger > 0.1 || gamepad2.right_trigger > 0.1) && flywheelRotateMotor.getCurrentPosition() > FLYWHEEL_ROTATE_MIN) {
-                    flywheelRotateMotor.setPower(gamepad1.right_trigger * -0.85);
+                if (!(gamepad1.b || gamepad2.b)
+                        && (gamepad1.left_trigger > 0.1 || gamepad2.left_trigger > 0.1)
+                        && flywheelRotateMotor.getCurrentPosition() < FLYWHEEL_ROTATE_MAX) {
+
+                    double expo = 1.5; // 1 = linear, 2 = quadratic, 3 = cubic
+                    double power = Math.pow(gamepad1.left_trigger, expo);
+
+                    flywheelRotateMotor.setPower(power * power);
+
+                } else if (!(gamepad1.b || gamepad2.b)
+                        && (gamepad1.right_trigger > 0.1 || gamepad2.right_trigger > 0.1)
+                        && flywheelRotateMotor.getCurrentPosition() > FLYWHEEL_ROTATE_MIN) {
+
+                    double expo = 1.5; // 1 = linear, 2 = quadratic, 3 = cubic
+                    double power = Math.pow(gamepad1.right_trigger, expo);
+                    flywheelRotateMotor.setPower(-(power * power));
+
                 } else {
                     flywheelRotateMotor.setPower(0);
                 }
                 telemetry.addData("flywheel rotate: ", flywheelRotateMotor.getCurrentPosition());
             }
-            telemetry.addData("flyweelRotate power: ", flywheelRotateMotor.getPower());
+            telemetry.addData("flywheelRotate power: ", flywheelRotateMotor.getPower());
             telemetry.addData("flywheel velocity: ", flywheelMotor.getVelocity());
             telemetry.update();
         }
