@@ -130,7 +130,7 @@ public class odo9BallFarRed extends LinearOpMode {
             flywheelRotateMotor.setTargetPosition(0);
             flywheelRotateMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             flywheelRotateMotor.setPower(0.7);
-            flywheelRotateMotor.setTargetPosition(-225);
+            flywheelRotateMotor.setTargetPosition(-217);
             flywheelAngle.setPosition(0.23); // Shooting angle for next far location
             flywheelMotor.setPower(0.92); // For far location
 
@@ -144,11 +144,11 @@ public class odo9BallFarRed extends LinearOpMode {
             Actions.runBlocking(
                     drive.actionBuilder(drive.localizer.getPose())
                             .setReversed(false)
-                            .splineTo(new Vector2d(36, 20), Math.toRadians(90)) // curve toward close artifact row
+                            .splineTo(new Vector2d(34, 20), Math.toRadians(90)) // curve toward close artifact row
                             .lineToYConstantHeading(58) // drive forward to intake artifacts
                             .build());
 
-            flywheelRotateMotor.setTargetPosition(450); // set turret to 45deg for next shots
+            flywheelRotateMotor.setTargetPosition(500); // set turret to 45deg for next shots
             flywheelMotor.setPower(0.76); // For middle location
             flywheelAngle.setPosition(0.2); // Shooting angle for middle
             sleep(200); // chill for ball to be sucked in
@@ -158,8 +158,8 @@ public class odo9BallFarRed extends LinearOpMode {
                     drive.actionBuilder(drive.localizer.getPose())
                             .lineToYConstantHeading(24)
                             .setReversed(false) // make the spline more sensible
-                            .splineToConstantHeading(new Vector2d(-16, 12), Math.toRadians(90)) // go to halfway
-                            .splineToConstantHeading(new Vector2d(-12, 6), Math.toRadians(90)) // go to center-ish and point at goal
+                            .splineToConstantHeading(new Vector2d(-16, 16), Math.toRadians(90)) // go to halfway
+                            .splineToConstantHeading(new Vector2d(-12, 12), Math.toRadians(90)) // go to center-ish and point at goal
                             .build());
 
             shootThree();
@@ -169,6 +169,10 @@ public class odo9BallFarRed extends LinearOpMode {
                     drive.actionBuilder(drive.localizer.getPose())
                             .setReversed(true) // make the spline more sensible
                             .splineToConstantHeading(new Vector2d(12, 20), Math.toRadians(90)) // Face row and drive to front of it
+                            .build());
+            Actions.runBlocking(
+                    drive.actionBuilder(drive.localizer.getPose())
+                            .turnTo(Math.toRadians(90))
                             .lineToYConstantHeading(58) // drive forward to intake artifacts
                             .build());
 
@@ -179,7 +183,7 @@ public class odo9BallFarRed extends LinearOpMode {
                     drive.actionBuilder(drive.localizer.getPose())
                             .lineToYConstantHeading(24)
                             .setReversed(false) // make the spline more sensible
-                            .splineToConstantHeading(new Vector2d(-12, 6), Math.toRadians(90)) // go to center-ish and point at goal
+                            .splineToConstantHeading(new Vector2d(-12, 12), Math.toRadians(90)) // go to center-ish and point at goal
                             .build());
 
             shootThree();
@@ -189,7 +193,7 @@ public class odo9BallFarRed extends LinearOpMode {
             // Get out of launch zone
             Actions.runBlocking(
                     drive.actionBuilder(drive.localizer.getPose())
-                            .lineToYConstantHeading(53) // get out of launch zone and pickup next row
+                            .splineTo(new Vector2d(-12, 53), Math.toRadians(90))
                             .build());
             StopAll();
         }
