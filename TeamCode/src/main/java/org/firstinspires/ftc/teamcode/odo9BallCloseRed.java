@@ -5,6 +5,7 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
@@ -25,7 +26,7 @@ public class odo9BallCloseRed extends LinearOpMode {
     CRServo beltRight; // 1 (expansion)
     CRServo beltVertical; // 2
     DcMotor flywheelRotateMotor; // 2 (expansion)
-    DcMotor flywheelMotor; // 2
+    DcMotorEx flywheelMotor; // 2
     DcMotor flywheelIntake; // 3
     Servo flywheelAngle; // 2 (expansion)
     GoBildaPinpointDriver odo;
@@ -80,7 +81,8 @@ public class odo9BallCloseRed extends LinearOpMode {
         // Flywheel Motor and Rotation
         flywheelRotateMotor = hardwareMap.dcMotor.get("rotatShot");
         flywheelRotateMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        flywheelMotor = hardwareMap.dcMotor.get("flywheelMotor");
+        flywheelMotor = hardwareMap.get(DcMotorEx.class, "flywheelMotor");
+        flywheelMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         flywheelIntake = hardwareMap.dcMotor.get("flywheelIntake");
         flywheelAngle = hardwareMap.get(Servo.class, "flywheelAngle");
 
@@ -126,7 +128,8 @@ public class odo9BallCloseRed extends LinearOpMode {
             flywheelRotateMotor.setPower(0.7);
             flywheelRotateMotor.setTargetPosition(460);
             flywheelAngle.setPosition(0.1); // Shooting angle for lobbing
-            flywheelMotor.setPower(0.67); // For lobbing
+            //flywheelMotor.setPower(0.67); // For lobbing
+            flywheelMotor.setVelocity(1280);
 
             // Go to center shoot location
             Actions.runBlocking(

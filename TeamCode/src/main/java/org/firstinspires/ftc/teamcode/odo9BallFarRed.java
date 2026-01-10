@@ -5,6 +5,7 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
@@ -27,7 +28,7 @@ public class odo9BallFarRed extends LinearOpMode {
     CRServo beltRight; // 1 (expansion)
     CRServo beltVertical; // 2
     DcMotor flywheelRotateMotor; // 2 (expansion)
-    DcMotor flywheelMotor; // 2
+    DcMotorEx flywheelMotor; // 2
     DcMotor flywheelIntake; // 3
     Servo flywheelAngle; // 2 (expansion)
     IMU imu;
@@ -86,7 +87,8 @@ public class odo9BallFarRed extends LinearOpMode {
         // Flywheel Motor and Rotation
         flywheelRotateMotor = hardwareMap.dcMotor.get("rotatShot");
         flywheelRotateMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        flywheelMotor = hardwareMap.dcMotor.get("flywheelMotor");
+        flywheelMotor = hardwareMap.get(DcMotorEx.class, "flywheelMotor");
+        flywheelMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         flywheelIntake = hardwareMap.dcMotor.get("flywheelIntake");
         flywheelAngle = hardwareMap.get(Servo.class, "flywheelAngle");
 
@@ -132,7 +134,8 @@ public class odo9BallFarRed extends LinearOpMode {
             flywheelRotateMotor.setPower(0.7);
             flywheelRotateMotor.setTargetPosition(-217);
             flywheelAngle.setPosition(0.23); // Shooting angle for next far location
-            flywheelMotor.setPower(0.92); // For far location
+            //flywheelMotor.setPower(0.92); // For far location
+            flywheelMotor.setVelocity(1850);
 
             sleep(2200); // warm up flywheel
 
@@ -149,7 +152,8 @@ public class odo9BallFarRed extends LinearOpMode {
                             .build());
 
             flywheelRotateMotor.setTargetPosition(500); // set turret to 45deg for next shots
-            flywheelMotor.setPower(0.76); // For middle location
+            //flywheelMotor.setPower(0.76); // For middle location
+            flywheelMotor.setVelocity(1450);
             flywheelAngle.setPosition(0.2); // Shooting angle for middle
             sleep(200); // chill for ball to be sucked in
 

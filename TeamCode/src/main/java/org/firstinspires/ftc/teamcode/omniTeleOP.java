@@ -57,7 +57,6 @@ public class omniTeleOP extends LinearOpMode{
     int FLYWHEEL_ROTATE_MAX = 1450;
     int FLYWHEEL_ROTATE_MIN = -2050;
     boolean intakeToggle = false;
-    double flywheelSpeedMultiplier = 1.0;
     double flywheelVelocitySet = 0;
     DcMotor frontLeftMotor; // 1
     DcMotor backLeftMotor; // 0
@@ -287,23 +286,19 @@ public class omniTeleOP extends LinearOpMode{
 
             if (gamepad1.dpad_up || gamepad2.dpad_up) { // CLOSEST (touching wall)
                 angle = 0;
-                flywheelSpeedMultiplier = 0.66;
-                flywheelVelocitySet = 1500;
+                flywheelVelocitySet = 1280; // 1500
             }
             if (gamepad1.dpad_left || gamepad2.dpad_left) { // CLOSE (centered on closer triangle)
                 angle = 0.28;
-                flywheelSpeedMultiplier = 0.8;
-                flywheelVelocitySet = 1800;
+                flywheelVelocitySet = 1350; // 1800
             }
             if (gamepad1.dpad_down || gamepad2.dpad_down) { // FAR (centered on top of triangle)
                 angle = 0.23;
-                flywheelSpeedMultiplier = 0.9;
-                flywheelVelocitySet = 2200;
+                flywheelVelocitySet = 1850; // 2200
             }
             if (gamepad1.dpad_right || gamepad2.dpad_right) { // CLOSE (other setting)
                 angle = 0.26;
-                flywheelSpeedMultiplier = 0.86;
-                flywheelVelocitySet = 1920;
+                flywheelVelocitySet = 1550; // 1920
             }
             // angle is between 0 and 0.4
             flywheelAngle.setPosition(angle);
