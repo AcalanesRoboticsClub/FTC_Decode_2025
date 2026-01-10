@@ -137,7 +137,7 @@ public class odo9BallFarRed extends LinearOpMode {
             //flywheelMotor.setPower(0.92); // For far location
             flywheelMotor.setVelocity(1850);
 
-            sleep(2200); // warm up flywheel
+            sleep(3000); // warm up flywheel
 
             shootThree(); // from far location
 
@@ -148,7 +148,7 @@ public class odo9BallFarRed extends LinearOpMode {
                     drive.actionBuilder(drive.localizer.getPose())
                             .setReversed(false)
                             .splineTo(new Vector2d(34, 20), Math.toRadians(90)) // curve toward close artifact row
-                            .lineToYConstantHeading(58) // drive forward to intake artifacts
+                            .lineToYConstantHeading(60) // drive forward to intake artifacts
                             .build());
 
             flywheelRotateMotor.setTargetPosition(500); // set turret to 45deg for next shots
@@ -160,7 +160,7 @@ public class odo9BallFarRed extends LinearOpMode {
             // reverse out and go to center
             Actions.runBlocking(
                     drive.actionBuilder(drive.localizer.getPose())
-                            .lineToYConstantHeading(24)
+                            .lineToYConstantHeading(20)
                             .setReversed(false) // make the spline more sensible
                             .splineToConstantHeading(new Vector2d(-16, 16), Math.toRadians(90)) // go to halfway
                             .splineToConstantHeading(new Vector2d(-12, 12), Math.toRadians(90)) // go to center-ish and point at goal
@@ -172,12 +172,12 @@ public class odo9BallFarRed extends LinearOpMode {
             Actions.runBlocking(
                     drive.actionBuilder(drive.localizer.getPose())
                             .setReversed(true) // make the spline more sensible
-                            .splineToConstantHeading(new Vector2d(12, 20), Math.toRadians(90)) // Face row and drive to front of it
+                            .splineToConstantHeading(new Vector2d(11, 20), Math.toRadians(90)) // Face row and drive to front of it
                             .build());
             Actions.runBlocking(
                     drive.actionBuilder(drive.localizer.getPose())
                             .turnTo(Math.toRadians(90))
-                            .lineToYConstantHeading(58) // drive forward to intake artifacts
+                            .lineToYConstantHeading(60) // drive forward to intake artifacts
                             .build());
 
             sleep(200); // chill for ball to be sucked in
@@ -197,7 +197,7 @@ public class odo9BallFarRed extends LinearOpMode {
             // Get out of launch zone
             Actions.runBlocking(
                     drive.actionBuilder(drive.localizer.getPose())
-                            .splineTo(new Vector2d(-12, 53), Math.toRadians(90))
+                            .splineTo(new Vector2d(-12, 55), Math.toRadians(90))
                             .build());
             StopAll();
         }

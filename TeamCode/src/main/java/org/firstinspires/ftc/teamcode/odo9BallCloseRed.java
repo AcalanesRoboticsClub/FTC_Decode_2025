@@ -101,7 +101,7 @@ public class odo9BallCloseRed extends LinearOpMode {
 
         // For RoadRunner pathing
         odo.setHeading(180, AngleUnit.DEGREES); // Set initial angle
-        Pose2d startPose = new Pose2d(-59, 23, Math.toRadians(180)); // starting coordinates and heading
+        Pose2d startPose = new Pose2d(-57.5, 23, Math.toRadians(180)); // starting coordinates and heading
         MecanumDrive drive = new MecanumDrive(hardwareMap, startPose);
 
         telemetry.addData("Status", "Initialized");
@@ -126,10 +126,11 @@ public class odo9BallCloseRed extends LinearOpMode {
             flywheelRotateMotor.setTargetPosition(0);
             flywheelRotateMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             flywheelRotateMotor.setPower(0.7);
-            flywheelRotateMotor.setTargetPosition(460);
+            flywheelRotateMotor.setTargetPosition(450);
             flywheelAngle.setPosition(0.1); // Shooting angle for lobbing
             //flywheelMotor.setPower(0.67); // For lobbing
             flywheelMotor.setVelocity(1280);
+            sleep(500);// Flywheel spin up
 
             // Go to center shoot location
             Actions.runBlocking(
@@ -169,7 +170,7 @@ public class odo9BallCloseRed extends LinearOpMode {
             Actions.runBlocking(
                     drive.actionBuilder(drive.localizer.getPose())
                             .setReversed(true) // no one knows what this does???!?!?!??
-                            .splineToConstantHeading(new Vector2d(12, 20), Math.toRadians(270)) // Face row and drive to front of it
+                            .splineToConstantHeading(new Vector2d(11.5, 20), Math.toRadians(270)) // Face row and drive to front of it
                             .build());
             // Pickup middle row of artifacts
             Actions.runBlocking(

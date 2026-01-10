@@ -130,6 +130,7 @@ public class odo9BallCloseBlue extends LinearOpMode {
             flywheelAngle.setPosition(0.1); // Shooting angle for lobbing
             //flywheelMotor.setPower(0.67); // For lobbing
             flywheelMotor.setVelocity(1280);
+            sleep(500);// Flywheel spin up
 
             // Go to center shoot location
             Actions.runBlocking(

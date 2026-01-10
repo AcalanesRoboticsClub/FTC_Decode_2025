@@ -137,7 +137,7 @@ public class odo9BallFarBlue extends LinearOpMode {
             //flywheelMotor.setPower(0.92); // For far location
             flywheelMotor.setVelocity(1850);
 
-            sleep(2200); // warm up flywheel
+            sleep(3000); // warm up flywheel
 
             shootThree(); // from far location
 
@@ -175,7 +175,7 @@ public class odo9BallFarBlue extends LinearOpMode {
             Actions.runBlocking(
                     drive.actionBuilder(drive.localizer.getPose())
                             .setReversed(false) // make the spline more sensible
-                            .splineToConstantHeading(new Vector2d(12, -20), Math.toRadians(270)) // Face row and drive to front of it
+                            .splineToConstantHeading(new Vector2d(11, -20), Math.toRadians(270)) // Face row and drive to front of it
                             .build());
             Actions.runBlocking(
                     drive.actionBuilder(drive.localizer.getPose())
