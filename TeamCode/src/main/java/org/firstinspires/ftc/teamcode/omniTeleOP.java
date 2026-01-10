@@ -289,12 +289,12 @@ public class omniTeleOP extends LinearOpMode{
                 flywheelVelocitySet = 1280; // 1500
             }
             if (gamepad1.dpad_left || gamepad2.dpad_left) { // CLOSE (centered on closer triangle)
-                angle = 0.28;
+                angle = 0.26;
                 flywheelVelocitySet = 1350; // 1800
             }
             if (gamepad1.dpad_down || gamepad2.dpad_down) { // FAR (centered on top of triangle)
                 angle = 0.23;
-                flywheelVelocitySet = 1850; // 2200
+                flywheelVelocitySet = 1800; // 2200
             }
             if (gamepad1.dpad_right || gamepad2.dpad_right) { // CLOSE (other setting)
                 angle = 0.26;

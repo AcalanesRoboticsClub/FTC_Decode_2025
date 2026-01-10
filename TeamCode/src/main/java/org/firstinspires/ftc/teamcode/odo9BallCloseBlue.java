@@ -101,7 +101,7 @@ public class odo9BallCloseBlue extends LinearOpMode {
 
         // For RoadRunner pathing
         odo.setHeading(180, AngleUnit.DEGREES); // Set initial angle
-        Pose2d startPose = new Pose2d(-66, -28, Math.toRadians(180)); // starting coordinates and heading
+        Pose2d startPose = new Pose2d(-66, -40, Math.toRadians(180)); // starting coordinates and heading -28
         MecanumDrive drive = new MecanumDrive(hardwareMap, startPose);
 
         telemetry.addData("Status", "Initialized");
@@ -126,7 +126,7 @@ public class odo9BallCloseBlue extends LinearOpMode {
             flywheelRotateMotor.setTargetPosition(0);
             flywheelRotateMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             flywheelRotateMotor.setPower(0.7);
-            flywheelRotateMotor.setTargetPosition(-460);
+            flywheelRotateMotor.setTargetPosition(-465);
             flywheelAngle.setPosition(0.1); // Shooting angle for lobbing
             //flywheelMotor.setPower(0.67); // For lobbing
             flywheelMotor.setVelocity(1280);

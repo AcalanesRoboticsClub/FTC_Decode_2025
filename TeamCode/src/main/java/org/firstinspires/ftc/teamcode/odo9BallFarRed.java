@@ -132,10 +132,10 @@ public class odo9BallFarRed extends LinearOpMode {
             flywheelRotateMotor.setTargetPosition(0);
             flywheelRotateMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             flywheelRotateMotor.setPower(0.7);
-            flywheelRotateMotor.setTargetPosition(-217);
+            flywheelRotateMotor.setTargetPosition(-211);
             flywheelAngle.setPosition(0.23); // Shooting angle for next far location
             //flywheelMotor.setPower(0.92); // For far location
-            flywheelMotor.setVelocity(1850);
+            flywheelMotor.setVelocity(1800);
 
             sleep(3000); // warm up flywheel
 

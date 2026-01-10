@@ -101,7 +101,7 @@ public class odo9BallCloseRed extends LinearOpMode {
 
         // For RoadRunner pathing
         odo.setHeading(180, AngleUnit.DEGREES); // Set initial angle
-        Pose2d startPose = new Pose2d(-57.5, 23, Math.toRadians(180)); // starting coordinates and heading
+        Pose2d startPose = new Pose2d(-57.5, 36.5, Math.toRadians(180)); // starting coordinates and heading 23
         MecanumDrive drive = new MecanumDrive(hardwareMap, startPose);
 
         telemetry.addData("Status", "Initialized");
