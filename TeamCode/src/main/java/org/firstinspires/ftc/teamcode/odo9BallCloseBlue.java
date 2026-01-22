@@ -5,6 +5,7 @@ import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
@@ -25,7 +26,7 @@ public class odo9BallCloseBlue extends LinearOpMode {
     CRServo beltRight; // 1 (expansion)
     CRServo beltVertical; // 2
     DcMotor flywheelRotateMotor; // 2 (expansion)
-    DcMotor flywheelMotor; // 2
+    DcMotorEx flywheelMotor; // 2
     DcMotor flywheelIntake; // 3
     Servo flywheelAngle; // 2 (expansion)
     GoBildaPinpointDriver odo;
@@ -80,7 +81,8 @@ public class odo9BallCloseBlue extends LinearOpMode {
         // Flywheel Motor and Rotation
         flywheelRotateMotor = hardwareMap.dcMotor.get("rotatShot");
         flywheelRotateMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        flywheelMotor = hardwareMap.dcMotor.get("flywheelMotor");
+        flywheelMotor = hardwareMap.get(DcMotorEx.class, "flywheelMotor");
+        flywheelMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         flywheelIntake = hardwareMap.dcMotor.get("flywheelIntake");
         flywheelAngle = hardwareMap.get(Servo.class, "flywheelAngle");
 
@@ -99,7 +101,7 @@ public class odo9BallCloseBlue extends LinearOpMode {
 
         // For RoadRunner pathing
         odo.setHeading(180, AngleUnit.DEGREES); // Set initial angle
-        Pose2d startPose = new Pose2d(-66, -28, Math.toRadians(180)); // starting coordinates and heading
+        Pose2d startPose = new Pose2d(-66, -40, Math.toRadians(180)); // starting coordinates and heading -28
         MecanumDrive drive = new MecanumDrive(hardwareMap, startPose);
 
         telemetry.addData("Status", "Initialized");
@@ -124,9 +126,11 @@ public class odo9BallCloseBlue extends LinearOpMode {
             flywheelRotateMotor.setTargetPosition(0);
             flywheelRotateMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             flywheelRotateMotor.setPower(0.7);
-            flywheelRotateMotor.setTargetPosition(-460);
+            flywheelRotateMotor.setTargetPosition(-465);
             flywheelAngle.setPosition(0.1); // Shooting angle for lobbing
-            flywheelMotor.setPower(0.71); // For lobbing
+            //flywheelMotor.setPower(0.67); // For lobbing
+            flywheelMotor.setVelocity(1280);
+            sleep(500);// Flywheel spin up
 
             // Go to center shoot location
             Actions.runBlocking(
@@ -143,9 +147,12 @@ public class odo9BallCloseBlue extends LinearOpMode {
                     drive.actionBuilder(drive.localizer.getPose())
                             .setReversed(true) // no one knows what this does???!?!?!??
                             .splineToConstantHeading(new Vector2d(-12, -20), Math.toRadians(90)) // Face row and drive to front of it
+                            .build());
+            Actions.runBlocking(
+                    drive.actionBuilder(drive.localizer.getPose())
+                            .turnTo(Math.toRadians(270))
                             .lineToYConstantHeading(-56) // drive forward to intake artifacts
                             .build());
-
 
             // Go to center shoot location
             Actions.runBlocking(
@@ -153,6 +160,7 @@ public class odo9BallCloseBlue extends LinearOpMode {
                             .setReversed(true) // no one knows what this does???!?!?!??
                             .lineToYConstantHeading(-24) // back off the wall
                             .strafeTo(new Vector2d(-36, -36)) // go to center-ish and point at goal
+                            .turnTo(Math.toRadians(270))
                             .build());
 
             shootThree();
@@ -161,12 +169,13 @@ public class odo9BallCloseBlue extends LinearOpMode {
             Actions.runBlocking(
                     drive.actionBuilder(drive.localizer.getPose())
                             .setReversed(true) // no one knows what this does???!?!?!??
-                            .splineToConstantHeading(new Vector2d(12, -20), Math.toRadians(90)) // Face row and drive to front of it
-                            //.lineToYConstantHeading(-64) // drive forward to intake artifacts
+                            .splineToConstantHeading(new Vector2d(12, -20), Math.toRadians(270)) // Face row and drive to front of it
+
                             .build());
             // Pickup middle row of artifacts
             Actions.runBlocking(
                     drive.actionBuilder(drive.localizer.getPose())
+                            .turnTo(Math.toRadians(270))
                             .lineToYConstantHeading(-64) // drive forward to intake artifacts
                             .build());
 
