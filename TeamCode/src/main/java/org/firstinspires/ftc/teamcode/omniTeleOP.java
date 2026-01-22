@@ -322,6 +322,7 @@ public class omniTeleOP extends LinearOpMode{
                     telemetry.addData("pitch", tag.ftcPose.pitch);
                     telemetry.addData("yaw", tag.ftcPose.yaw);
 
+
                     // yaw can be like -50 to 50
                     if (tag.ftcPose.yaw > 15 && flywheelRotateMotor.getCurrentPosition() < FLYWHEEL_ROTATE_MAX) {
                         flywheelRotateMotor.setPower(0.5);
