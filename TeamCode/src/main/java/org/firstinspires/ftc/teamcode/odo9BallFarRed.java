@@ -2,10 +2,10 @@
 
 package org.firstinspires.ftc.teamcode;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
 import com.qualcomm.robotcore.hardware.CRServo;
+import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
@@ -16,9 +16,8 @@ import com.acmerobotics.roadrunner.Pose2d;
 import com.acmerobotics.roadrunner.Vector2d;
 import com.acmerobotics.roadrunner.ftc.Actions;
 
-@TeleOp
-@Disabled // <-----------------------------------------------------  REMOVE FOR IT TO SHOW UP ON DRIVER HUB
-public class odo12BallFarBlue extends LinearOpMode {
+@Autonomous
+public class odo9BallFarRed extends LinearOpMode {
     DcMotor frontLeftMotor; // 1
     DcMotor backLeftMotor; // 0
     DcMotor frontRightMotor; // 1 (expansion)
@@ -29,7 +28,7 @@ public class odo12BallFarBlue extends LinearOpMode {
     CRServo beltRight; // 1 (expansion)
     CRServo beltVertical; // 2
     DcMotor flywheelRotateMotor; // 2 (expansion)
-    DcMotor flywheelMotor; // 2
+    DcMotorEx flywheelMotor; // 2
     DcMotor flywheelIntake; // 3
     Servo flywheelAngle; // 2 (expansion)
     IMU imu;
@@ -56,9 +55,9 @@ public class odo12BallFarBlue extends LinearOpMode {
     public void shootThree()
     {
         // Intake balls into turret to shoot all 3
-        flywheelIntake.setPower(0.6);
+        flywheelIntake.setPower(0.5);
 
-        sleep(4000); // Wait for all 3 to shoot
+        sleep(3800); // Wait for all 3 to shoot
 
         flywheelIntake.setPower(0); // stop shooting but leave intake and flywheel running
     }
@@ -87,7 +86,9 @@ public class odo12BallFarBlue extends LinearOpMode {
 
         // Flywheel Motor and Rotation
         flywheelRotateMotor = hardwareMap.dcMotor.get("rotatShot");
-        flywheelMotor = hardwareMap.dcMotor.get("flywheelMotor");
+        flywheelRotateMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        flywheelMotor = hardwareMap.get(DcMotorEx.class, "flywheelMotor");
+        flywheelMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         flywheelIntake = hardwareMap.dcMotor.get("flywheelIntake");
         flywheelAngle = hardwareMap.get(Servo.class, "flywheelAngle");
 
@@ -106,7 +107,7 @@ public class odo12BallFarBlue extends LinearOpMode {
 
         // For RoadRunner pathing
         odo.setHeading(180, AngleUnit.DEGREES); // Set initial angle
-        Pose2d startPose = new Pose2d(59, -12, Math.toRadians(180)); // starting coordinates and heading
+        Pose2d startPose = new Pose2d(64, 5, Math.toRadians(180)); // starting coordinates and heading
         MecanumDrive drive = new MecanumDrive(hardwareMap, startPose);
 
         telemetry.addData("Status", "Initialized");
@@ -131,11 +132,12 @@ public class odo12BallFarBlue extends LinearOpMode {
             flywheelRotateMotor.setTargetPosition(0);
             flywheelRotateMotor.setMode(DcMotor.RunMode.RUN_TO_POSITION);
             flywheelRotateMotor.setPower(0.7);
-            flywheelRotateMotor.setTargetPosition(220);
-            flywheelAngle.setPosition(0.2); // Shooting angle for next far location
-            flywheelMotor.setPower(0.96); // For far location
+            flywheelRotateMotor.setTargetPosition(-211);
+            flywheelAngle.setPosition(0.23); // Shooting angle for next far location
+            //flywheelMotor.setPower(0.92); // For far location
+            flywheelMotor.setVelocity(1800);
 
-            sleep(2200); // warm up flywheel
+            sleep(3000); // warm up flywheel
 
             shootThree(); // from far location
 
@@ -143,58 +145,49 @@ public class odo12BallFarBlue extends LinearOpMode {
 
             // Pickup first row of artifacts
             Actions.runBlocking(
-                    drive.actionBuilder(startPose)
-                            //.splineTo(new Vector2d(48, -12), Math.toRadians(180)) // Drive strait forward
-                            .splineTo(new Vector2d(36, -20), Math.toRadians(270)) // curve toward close artifact row
-                            .lineToYConstantHeading(-56) // drive forward to intake artifacts
+                    drive.actionBuilder(drive.localizer.getPose())
+                            .setReversed(false)
+                            .splineTo(new Vector2d(34, 20), Math.toRadians(90)) // curve toward close artifact row
+                            .lineToYConstantHeading(60) // drive forward to intake artifacts
                             .build());
 
-            flywheelRotateMotor.setTargetPosition(-480); // set turret to 45deg for next shots
+            flywheelRotateMotor.setTargetPosition(500); // set turret to 45deg for next shots
+            //flywheelMotor.setPower(0.76); // For middle location
+            flywheelMotor.setVelocity(1450);
+            flywheelAngle.setPosition(0.2); // Shooting angle for middle
+            sleep(200); // chill for ball to be sucked in
 
             // reverse out and go to center
             Actions.runBlocking(
                     drive.actionBuilder(drive.localizer.getPose())
-                            .lineToYConstantHeading(-20)
-                            .strafeTo(new Vector2d(-18, -12)) // go to center-ish and point at goal
-                            .turnTo(Math.toRadians(270))
+                            .lineToYConstantHeading(20)
+                            .setReversed(false) // make the spline more sensible
+                            .splineToConstantHeading(new Vector2d(-16, 16), Math.toRadians(90)) // go to halfway
+                            .splineToConstantHeading(new Vector2d(-12, 12), Math.toRadians(90)) // go to center-ish and point at goal
                             .build());
-
-            flywheelMotor.setPower(0.8); // For middle location
-            flywheelAngle.setPosition(0.26); // Shooting angle for middle
 
             shootThree();
 
             // Pickup middle row of artifacts
             Actions.runBlocking(
                     drive.actionBuilder(drive.localizer.getPose())
-                            .splineTo(new Vector2d(12, -20), Math.toRadians(270)) // Face row and drive to front of it
-                            .lineToYConstantHeading(-56) // drive forward to intake artifacts
+                            .setReversed(true) // make the spline more sensible
+                            .splineToConstantHeading(new Vector2d(11, 20), Math.toRadians(90)) // Face row and drive to front of it
                             .build());
+            Actions.runBlocking(
+                    drive.actionBuilder(drive.localizer.getPose())
+                            .turnTo(Math.toRadians(90))
+                            .lineToYConstantHeading(60) // drive forward to intake artifacts
+                            .build());
+
+            sleep(200); // chill for ball to be sucked in
 
             // reverse out and go to center
             Actions.runBlocking(
                     drive.actionBuilder(drive.localizer.getPose())
-                            .lineToYConstantHeading(-20)
-                            .strafeTo(new Vector2d(-18, -12)) // go to center-ish and point at goal
-                            .turnTo(Math.toRadians(270))
-                            .build());
-
-
-            shootThree();
-
-            // Pickup far row of artifacts
-            Actions.runBlocking(
-                    drive.actionBuilder(drive.localizer.getPose())
-                            .splineTo(new Vector2d(-12, -20), Math.toRadians(270)) // Face row and drive to front of it
-                            .lineToYConstantHeading(-48) // drive forward to intake artifacts
-                            .build());
-
-            // reverse out and go to center
-            Actions.runBlocking(
-                    drive.actionBuilder(drive.localizer.getPose())
-                            .lineToYConstantHeading(-20)
-                            .strafeTo(new Vector2d(-18, -12)) // go to center-ish and point at goal
-                            .turnTo(Math.toRadians(270))
+                            .lineToYConstantHeading(24)
+                            .setReversed(false) // make the spline more sensible
+                            .splineToConstantHeading(new Vector2d(-12, 12), Math.toRadians(90)) // go to center-ish and point at goal
                             .build());
 
             shootThree();
@@ -204,7 +197,7 @@ public class odo12BallFarBlue extends LinearOpMode {
             // Get out of launch zone
             Actions.runBlocking(
                     drive.actionBuilder(drive.localizer.getPose())
-                            .strafeTo(new Vector2d(-24, -48)) // get out of launch zone
+                            .splineTo(new Vector2d(-12, 55), Math.toRadians(90))
                             .build());
             StopAll();
         }
