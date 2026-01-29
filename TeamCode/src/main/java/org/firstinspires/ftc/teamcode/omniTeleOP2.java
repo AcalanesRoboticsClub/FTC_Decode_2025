@@ -34,6 +34,7 @@ package org.firstinspires.ftc.teamcode;
 import android.util.Size;
 
 import com.acmerobotics.dashboard.FtcDashboard;
+import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.acmerobotics.roadrunner.Pose2d;
 import com.qualcomm.robotcore.eventloop.opmode.LinearOpMode;
@@ -57,10 +58,10 @@ import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
 
 import java.util.List;
 
-@TeleOp
+@TeleOp @Config
 public class omniTeleOP2 extends LinearOpMode{
-    int FLYWHEEL_ROTATE_MAX = 1450;
-    int FLYWHEEL_ROTATE_MIN = -1980;
+    int FLYWHEEL_ROTATE_MAX = 1200;
+    int FLYWHEEL_ROTATE_MIN = -1600;
     boolean intakeToggle = false;
     double flywheelVelocitySet = 0;
     DcMotor frontLeftMotor; // 1
@@ -82,12 +83,13 @@ public class omniTeleOP2 extends LinearOpMode{
     double angle;
 
     // PID CONTROLLER
+    boolean aimingToggle = false;
+    boolean blueSideToggle = true;
     double TURRET_TPR = 537.7 * (10.0 / 70.0);   // Example for 5203-312 with 10:70 ratio
     public static class Params {
         public double kP = -2;
         public double kI = 0;
         public double kD = 0;
-        public double kF = 0;
     }
     public static TurretTestOP.Params PARAMS = new TurretTestOP.Params();
     ElapsedTime timer = new ElapsedTime();
@@ -211,16 +213,19 @@ public class omniTeleOP2 extends LinearOpMode{
                 imu.initialize(parameters);
                 imu.resetYaw();
                 odo.setHeading(0, AngleUnit.DEGREES);
+                // odo.setPosition(new Pose2d(0, 0, Math.toRadians(0)));
+                // odo.resetPosAndIMU();
+                aimingToggle = true;
             }
 
             // ===== Adjustable expo values =====
             double driveExpo = 1.5;   // 1.0 = linear, 2.0 = quadratic, 3.0 = very soft center
-            double turnExpo  = 1.5;
+            double turnExpo = 1.5;
 
 
             // ===== Read & scale driver input =====
-            double x  = expo(calcLargestChange(gamepad1.left_stick_x, gamepad2.left_stick_x), driveExpo);
-            double y  = expo(calcLargestChange(-gamepad1.left_stick_y, -gamepad2.left_stick_y), driveExpo); // negative = forward
+            double x = expo(calcLargestChange(gamepad1.left_stick_x, gamepad2.left_stick_x), driveExpo);
+            double y = expo(calcLargestChange(-gamepad1.left_stick_y, -gamepad2.left_stick_y), driveExpo); // negative = forward
             double rx = expo(calcLargestChange(gamepad1.right_stick_x, gamepad2.right_stick_x), turnExpo);
 
             // ===== Field-centric math =====
@@ -235,10 +240,10 @@ public class omniTeleOP2 extends LinearOpMode{
             // Denominator is the largest motor power (absolute value) or 1
             double denominator = Math.max(Math.abs(rotY) + Math.abs(rotX) + Math.abs(rx), 1);
 
-            double frontLeftPower  = (rotY + rotX + rx) / denominator;
-            double backLeftPower   = (rotY - rotX + rx) / denominator;
+            double frontLeftPower = (rotY + rotX + rx) / denominator;
+            double backLeftPower = (rotY - rotX + rx) / denominator;
             double frontRightPower = (rotY - rotX - rx) / denominator;
-            double backRightPower  = (rotY + rotX - rx) / denominator;
+            double backRightPower = (rotY + rotX - rx) / denominator;
 
             // ===== Normalize =====
             double max = Math.max(Math.abs(frontLeftPower), Math.abs(frontRightPower));
@@ -246,10 +251,10 @@ public class omniTeleOP2 extends LinearOpMode{
             max = Math.max(max, Math.abs(backRightPower));
 
             if (max > 1.0) {
-                frontLeftPower  /= max;
+                frontLeftPower /= max;
                 frontRightPower /= max;
-                backLeftPower   /= max;
-                backRightPower  /= max;
+                backLeftPower /= max;
+                backRightPower /= max;
             }
 
             // ===== Apply power =====
@@ -291,7 +296,6 @@ public class omniTeleOP2 extends LinearOpMode{
             }
 
 
-
             if (gamepad1.right_bumper || gamepad2.right_bumper) {
                 //flywheelMotor.setPower(1 * flywheelSpeedMultiplier);
                 flywheelMotor.setVelocity(flywheelVelocitySet);
@@ -306,7 +310,7 @@ public class omniTeleOP2 extends LinearOpMode{
             }
 
             // Control the indicator light
-            if(flywheelMotor.getVelocity() > flywheelVelocitySet - 100) // under speed
+            if (flywheelMotor.getVelocity() > flywheelVelocitySet - 100) // under speed
             {
                 ledIndicator.setPosition(0.5); // green
             } else if (flywheelVelocitySet != 0) {
@@ -334,32 +338,48 @@ public class omniTeleOP2 extends LinearOpMode{
             telemetry.addData("flywheel position: ", flywheelAngle.getPosition());
 
             // FLYWHEEL AUTO-AIMING
+            if (gamepad1.bWasPressed() || gamepad2.bWasPressed()) {
+                aimingToggle = !aimingToggle;
+            }
+            if (gamepad1.xWasPressed() || gamepad2.xWasPressed()) {
+                blueSideToggle = true;
+            }
+            if (gamepad1.yWasPressed() || gamepad2.yWasPressed()) {
+                blueSideToggle = false;
+            }
+
             List<AprilTagDetection> rawDetections = tagProcessor.getDetections();
             telemetry.addData("data", tagProcessor.getDetections());
             double robotHeading = 0.0;
             if (flywheelRotateMotor.getCurrentPosition() >= FLYWHEEL_ROTATE_MAX) {
                 flywheelRotateMotor.setPower(-0.2);
-            }
-            else if (flywheelRotateMotor.getCurrentPosition() <= FLYWHEEL_ROTATE_MIN) {
+            } else if (flywheelRotateMotor.getCurrentPosition() <= FLYWHEEL_ROTATE_MIN) {
                 flywheelRotateMotor.setPower(0.2);
-            }
-            else {
+            } else if (aimingToggle == true) {
                 double dt = timer.seconds();
                 timer.reset();
 
                 // Get robot heading and position
                 robotHeading = -odo.getHeading(AngleUnit.RADIANS);                // radians
                 if (robotHeading > 3.0) {
-                    robotHeading = robotHeading - 2*Math.PI;
+                    robotHeading = robotHeading - 2 * Math.PI;
                 }
                 previousRobotHeading = robotHeading;
                 robotPos = odo.getPosition();
                 turretAngle = -flywheelRotateMotor.getCurrentPosition() / TURRET_TPR * Math.PI / 23;
 
                 cameraHeading = robotHeading + turretAngle;
-                CORNER_ANGLE = Math.atan2(72 + robotPos.getY(DistanceUnit.INCH), 72 - robotPos.getX(DistanceUnit.INCH));
+                CORNER_ANGLE = 0.0;
+                if (blueSideToggle) {
+                    CORNER_ANGLE = Math.atan2(72 + robotPos.getY(DistanceUnit.INCH), 72 - robotPos.getX(DistanceUnit.INCH));
+                }
+                else {
+                    CORNER_ANGLE = Math.atan2(72 + robotPos.getY(DistanceUnit.INCH), 72 + robotPos.getX(DistanceUnit.INCH));
+                }
 
                 error = cameraHeading - CORNER_ANGLE;
+                double OFFSET_ANGLE = -0.06;
+                error += OFFSET_ANGLE;
 
                 integral += error * dt;
                 double derivative = (error - lastError) / dt;
@@ -374,8 +394,7 @@ public class omniTeleOP2 extends LinearOpMode{
                 flywheelMinAngle = FLYWHEEL_ROTATE_MIN / TURRET_TPR * Math.PI / 23;
                 if (CORNER_ANGLE <= 0) {
                     totalOutput = -pidOutput;
-                }
-                else if (CORNER_ANGLE > 0) {
+                } else if (CORNER_ANGLE > 0) {
                     totalOutput = pidOutput;
                 }
                 if ((totalOutput < 0 && cameraHeading + error < flywheelMinAngle) && (totalOutput > 0 && cameraHeading + error > flywheelMaxAngle)) {
@@ -383,8 +402,29 @@ public class omniTeleOP2 extends LinearOpMode{
                 }
                 flywheelRotateMotor.setPower(-totalOutput);
             }
+            else {
+                if ((gamepad1.left_trigger > 0.1 || gamepad2.left_trigger > 0.1)
+                        && flywheelRotateMotor.getCurrentPosition() < FLYWHEEL_ROTATE_MAX) {
+
+                    double expo = 1.5; // 1 = linear, 2 = quadratic, 3 = cubic
+                    double power = Math.pow(gamepad1.left_trigger, expo);
+
+                    flywheelRotateMotor.setPower(power * power);
+
+                } else if ((gamepad1.right_trigger > 0.1 || gamepad2.right_trigger > 0.1)
+                        && flywheelRotateMotor.getCurrentPosition() > FLYWHEEL_ROTATE_MIN) {
+
+                    double expo = 1.5; // 1 = linear, 2 = quadratic, 3 = cubic
+                    double power = Math.pow(gamepad1.right_trigger, expo);
+                    flywheelRotateMotor.setPower(-(power * power));
+
+                } else {
+                    flywheelRotateMotor.setPower(0);
+                }
+            }
 
             telemetry.addData("flyweelRotate: ", flywheelRotateMotor.getPower());
+            telemetry.addData("aimingToggle:", aimingToggle);
 
             TelemetryPacket packet = new TelemetryPacket();
             packet.put("error", error);
