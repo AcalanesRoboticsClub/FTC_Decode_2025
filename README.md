@@ -79,12 +79,14 @@ Instead of relying solely on AprilTag visibility, we use:
 
 This allows accurate aiming **even when the camera cannot see a tag**.
 
+- The turret can continuously track the goal, correcting for position and adjusting the angle in real time
+
 ---
 
 ### TeleOp Driver Aids
 - Field-centric driving using odometry  
 - Throttle curves for smoother low-speed control  
-- LED indicator shows when the flywheel is at target RPM  
+- LED indicator shows when the flywheel is at the target RPM  
 - Preset shooting configurations for multiple field locations  
 
 ---
@@ -94,6 +96,9 @@ This allows accurate aiming **even when the camera cannot see a tag**.
 | Control | Action |
 |------|------|
 | **A** | Toggle intake and transfer belts |
+| **B** | Disable automatic aiming |
+| **X** | Enable automatic aiming for the blue goal |
+| **Y** | Enable automatic aiming for the red goal |
 | **D-Pad** | Turret angle and velocity presets |
 | **Right Button** | Turret kicker (feed artifacts) |
 | **Left Button** | Spin up flywheel |
