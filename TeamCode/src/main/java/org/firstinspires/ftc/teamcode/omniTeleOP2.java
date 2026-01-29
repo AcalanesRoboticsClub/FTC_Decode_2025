@@ -231,11 +231,18 @@ public class omniTeleOP2 extends LinearOpMode{
             double rx = expo(calcLargestChange(gamepad1.right_stick_x, gamepad2.right_stick_x), turnExpo);
 
             // ===== Field-centric math =====
-            double botHeading = -odo.getHeading(AngleUnit.RADIANS);
+
+            double botHeading = odo.getHeading(AngleUnit.RADIANS);
+
+            // Alliance-based field flip
+            double fieldOffset = blueSideToggle ? 0.0 : Math.PI;
+
+            // IMPORTANT: negate heading for inverse rotation
+            double effectiveHeading = -(botHeading - fieldOffset);
 
             // Rotate the movement direction counter to the bot's rotation
-            double rotX = x * Math.cos(botHeading) - y * Math.sin(botHeading);
-            double rotY = x * Math.sin(botHeading) + y * Math.cos(botHeading);
+            double rotX = x * Math.cos(effectiveHeading) - y * Math.sin(effectiveHeading);
+            double rotY = x * Math.sin(effectiveHeading) + y * Math.cos(effectiveHeading);
 
             rotX *= 1.1;  // Counteract imperfect strafing
 
@@ -380,7 +387,7 @@ public class omniTeleOP2 extends LinearOpMode{
                 }
 
                 error = cameraHeading - CORNER_ANGLE;
-                double OFFSET_ANGLE = -0.071;
+                double OFFSET_ANGLE = -0.055;
                 error += OFFSET_ANGLE;
 
                 integral += error * dt;
