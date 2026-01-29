@@ -54,6 +54,7 @@ import android.util.Size;
 import androidx.annotation.NonNull;
 
 import com.acmerobotics.dashboard.canvas.Canvas;
+import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
@@ -73,9 +74,12 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import org.firstinspires.ftc.robotcore.external.hardware.camera.WebcamName;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 import org.firstinspires.ftc.vision.VisionPortal;
 import org.firstinspires.ftc.vision.apriltag.AprilTagDetection;
 import org.firstinspires.ftc.vision.apriltag.AprilTagProcessor;
+
+import java.util.List;
 
 /*
 DRIVER SCHEMA:
@@ -89,6 +93,13 @@ DRIVER SCHEMA:
 
 @TeleOp @Config
 public class TurretTestOP extends LinearOpMode{
+    public static double normDelta(double angle) {
+        angle = angle % 360;
+        if (angle > 180) angle -= 360;
+        if (angle < -180) angle += 360;
+        return angle;
+    }
+
     int FLYWHEEL_ROTATE_MAX = 1300;
     int FLYWHEEL_ROTATE_MIN = -1750;
     double SLOWER_SPEED_MULTIPLIER = 0.77;
@@ -112,24 +123,32 @@ public class TurretTestOP extends LinearOpMode{
     DistanceSensor rightDistanceSensor;
     DistanceSensor backDistanceSensor;
     double angle;
-    int setpoint = 0;
 
     // PID CONTROLLER
+    // --- Turret constants ---
+    double TURRET_TPR = 537.7 * (10.0 / 70.0);   // Example for 5203-312 with 10:70 ratio
     public static class Params {
-        public double kP = 0.03;
-        public double kI = 0;
+        public double kP = -2;
+        public double kI = -5;
         public double kD = 0;
+        public double kF = 0;
     }
     public static Params PARAMS = new Params();
-    double integralSum = 0;
     ElapsedTime timer = new ElapsedTime();
     private double lastError = 0;
+    double error = 0;
+    Pose2D robotPos;
+    double turretAngle = 0.0;
+    double cameraHeading;
+    double CORNER_ANGLE;
+    double integral = 0;
+    double pidOutput = 0.0;
+    double totalOutput;
     double yaw = 0;
     double targetYaw = 0;
-    double yawError = 0;
 
-    double lastTurretAngle = 0;
-    double lastRobotAngle = 0;
+    // 1D Kalman Filter
+    KalmanFilter1D yawFilter = new KalmanFilter1D(0.01, 2.0);
 
     //    PIDController pid = new PIDController(kP, kI, kD);
     FtcDashboard dashboard = FtcDashboard.getInstance();
@@ -182,12 +201,6 @@ public class TurretTestOP extends LinearOpMode{
                 .setDrawTagOutline(true)
                 .build();
 
-        VisionPortal visionPortal = new VisionPortal.Builder()
-                .addProcessor(tagProcessor)
-                .setCamera(hardwareMap.get(WebcamName.class, "Webcam 1"))
-                .setCameraResolution(new Size(640, 480))
-                .build();
-
         // SET UP ODOMETRY
         odo = hardwareMap.get(GoBildaPinpointDriver.class,"pinpoint");
         odo.setOffsets(0, 0, DistanceUnit.INCH); // <-------------------------------------------- NO IDEA WHAT THIS DOES AT ALL
@@ -198,8 +211,8 @@ public class TurretTestOP extends LinearOpMode{
         odo.resetPosAndIMU();
 
         // For RoadRunner pathing
-        odo.setHeading(180, AngleUnit.DEGREES); // Set initial angle
-        Pose2d startPose = new Pose2d(59, -12, Math.toRadians(180)); // starting coordinates and heading
+        odo.setHeading(0, AngleUnit.DEGREES); // Set initial angle (0 or 270?)
+        Pose2d startPose = new Pose2d(0, 0, Math.toRadians(270)); // starting coordinates and heading
         MecanumDrive drive = new MecanumDrive(hardwareMap, startPose);
 
         // SET UP HARDWARE
@@ -233,9 +246,21 @@ public class TurretTestOP extends LinearOpMode{
         // Without this, the REV Hub's orientation is assumed to be logo up / USB forward
         imu.initialize(parameters);
 
+        VisionPortal visionPortal = new VisionPortal.Builder()
+                .addProcessor(tagProcessor)
+                .setCamera(hardwareMap.get(WebcamName.class, "Webcam 1"))
+                .setCameraResolution(new Size(1920, 1080))
+                .build();
+
         waitForStart();
 
+        timer.reset();
+        double previousRobotHeading = odo.getHeading(AngleUnit.RADIANS);
+
         while (!isStopRequested() && opModeIsActive()) {
+            // test to find ratio - do later
+//            telemetry.addData("ticks", flywheelRotateMotor.getCurrentPosition());
+
             odo.update();
 
             // This button choice was made so that it is hard to hit on accident,
@@ -244,6 +269,7 @@ public class TurretTestOP extends LinearOpMode{
             if (gamepad1.options) {
                 imu.initialize(parameters);
                 imu.resetYaw();
+                odo.setHeading(0, AngleUnit.DEGREES);
             }
 
             // CHASSIS DRIVING
@@ -326,43 +352,106 @@ public class TurretTestOP extends LinearOpMode{
             telemetry.addData("flywheel position: ", flywheelAngle.getPosition());
 
             // FLYWHEEL AUTO-AIMING
+            List<AprilTagDetection> rawDetections = tagProcessor.getDetections();
             telemetry.addData("data", tagProcessor.getDetections());
+            double robotHeading = 0.0;
             if (flywheelRotateMotor.getCurrentPosition() >= FLYWHEEL_ROTATE_MAX) {
-                flywheelRotateMotor.setPower(0.2);
-            }
-            else if (flywheelRotateMotor.getCurrentPosition() <= FLYWHEEL_ROTATE_MIN) {
                 flywheelRotateMotor.setPower(-0.2);
             }
-            else if (!tagProcessor.getDetections().isEmpty()) {
-                // angle of turret and robot
-                double turretAngle = flywheelRotateMotor.getCurrentPosition() / 7.0 * 360;
-                double robotAngle = odo.getHeading(AngleUnit.DEGREES);
-
-                AprilTagDetection tag = tagProcessor.getDetections().get(0);
-                yaw = tag.ftcPose.yaw;
-                targetYaw = 0.0;
-                yawError = targetYaw - yaw;
-
-                integralSum += yawError * timer.seconds();
-                double derivative = (yawError - lastError) / timer.seconds();
-                lastError = yawError;
-
-                double actual_kD = PARAMS.kD;
-
-                if ((frontLeftMotor.getPower() > 0.5 && backLeftMotor.getPower() > 0.5) || (frontRightMotor.getPower() > 0.5 && backRightMotor.getPower() > 0.5)) {
-                    actual_kD *= 1.2;
-                }
-                telemetry.addData("actual kD", actual_kD);
-
+            else if (flywheelRotateMotor.getCurrentPosition() <= FLYWHEEL_ROTATE_MIN) {
+                flywheelRotateMotor.setPower(0.2);
+            }
+//            else if (!(rawDetections.size() == 0) && !(rawDetections == null)) {
+//                double dt = timer.seconds();
+//                timer.reset();
+//
+//                // --- ODOMETRY: robot heading + heading rate ---
+//                double robotHeading = odo.getHeading(AngleUnit.DEGREES);                // radians
+//                double robotHeadingRate = (robotHeading - previousRobotHeading) / dt;
+//                previousRobotHeading = robotHeading;
+//
+//                Pose2D robotPos = odo.getPosition();
+//                turretAngle = flywheelRotateMotor.getCurrentPosition() / TURRET_TPR;
+//
+//                double cameraHeading = robotHeading + turretAngle;
+//
+//                AprilTagDetection tag = rawDetections.get(0);
+//                double rawYawDeg = tag.ftcPose.yaw;
+//                double rawYaw = Math.toRadians(rawYawDeg);
+//                double filteredYaw = yawFilter.update(rawYaw);
+//
+//                // initialize on first frame
+//                if (!lpfInit) {
+//                    prevRawYaw = rawYaw;
+//                    yaw = 0;          // HPF starts at 0
+//                    lpfInit = true;
+//                }
+//
+//                // ----- High-pass filter -----
+//                double highPassYaw = ALPHA * (yaw + (filteredYaw - prevRawYaw));
+//
+//                // update stored values
+//                prevRawYaw = filteredYaw;
+//
+//                // use high-pass signal
+//                yaw = -highPassYaw;
+//
+//                // --- Combined error ---
+//                double CORNER_ANGLE = Math.atan2(robotPos.getY(DistanceUnit.INCH), robotPos.getX(DistanceUnit.INCH));
+//                error = cameraHeading - CORNER_ANGLE;
+//
+//                // Normalize angle to (-PI, PI)
+//                // error = Math.atan2(Math.sin(error), Math.cos(error));
+//
+//                // --- PID controller ---
+//                integral += error * dt;
+//                double derivative = (error - lastError) / dt;
+//                lastError = error;
+//
+//                pidOutput = PARAMS.kP * error +
+//                        PARAMS.kI * integral +
+//                        PARAMS.kD * derivative;
+//
+//                flywheelRotateMotor.setPower(pidOutput);
+//
+//                telemetry.addData("error", error);
+//                telemetry.addData("PID Output", pidOutput);
+//            }
+            else {
+                double dt = timer.seconds();
                 timer.reset();
 
-                double pidOutput = (yawError * PARAMS.kP) + (derivative * actual_kD) + (integralSum * PARAMS.kI);
-                flywheelRotateMotor.setPower(-pidOutput);
-                telemetry.addData("error", yawError);
-                telemetry.addData("PID Output", pidOutput);
-            }
-            else {
-                flywheelRotateMotor.setPower(0);
+                // Get robot heading and position
+                robotHeading = -odo.getHeading(AngleUnit.RADIANS);                // radians
+                if (robotHeading > 3.0) {
+                    robotHeading = robotHeading - 2*Math.PI;
+                }
+                previousRobotHeading = robotHeading;
+                robotPos = odo.getPosition();
+                turretAngle = -flywheelRotateMotor.getCurrentPosition() / TURRET_TPR * Math.PI / 23;
+
+                cameraHeading = robotHeading + turretAngle;
+                CORNER_ANGLE = Math.atan2(72 + robotPos.getY(DistanceUnit.INCH), 72 - robotPos.getX(DistanceUnit.INCH));
+
+                error = cameraHeading - CORNER_ANGLE;
+
+                integral += error * dt;
+                double derivative = (error - lastError) / dt;
+                lastError = error;
+
+                pidOutput = PARAMS.kP * error +
+                        PARAMS.kI * integral +
+                        PARAMS.kD * derivative;
+
+                totalOutput = 0;
+                if (CORNER_ANGLE <= 0) {
+                    totalOutput = -pidOutput;
+                }
+                else if (CORNER_ANGLE > 0) {
+                    totalOutput = pidOutput;
+                }
+                flywheelRotateMotor.setPower(-totalOutput);
+
             }
 //                else {
 //                        yawError = -lastError;
@@ -374,16 +463,27 @@ public class TurretTestOP extends LinearOpMode{
 //
 //                        double pidOutput = (yawError * PARAMS.kP) + (derivative * PARAMS.kD) + (integralSum * PARAMS.kI);
 //                        flywheelRotateMotor.setPower(-pidOutput);
-//                    telemetry.addData("error", yawError);
+//                    telemetry.addData("error",e yawError);
 //                    telemetry.addData("PID Output", pidOutput);
 //                }
             telemetry.addData("flyweelRotate: ", flywheelRotateMotor.getPower());
 
             TelemetryPacket packet = new TelemetryPacket();
-            packet.put("error", yawError);
+            packet.put("error", error);
             packet.put("kP", PARAMS.kP);
             packet.put("kI", PARAMS.kI);
             packet.put("kD", PARAMS.kD);
+            packet.put("kF", PARAMS.kD);
+            packet.put("turret angle", turretAngle);
+            packet.put("robot angle", robotHeading);
+            packet.put("camera heading", cameraHeading);
+            packet.put("robot position x", robotPos.getX(DistanceUnit.INCH));
+            packet.put("robot position y", robotPos.getY(DistanceUnit.INCH));
+            packet.put("corner angle", CORNER_ANGLE);
+            packet.put("turretPos", flywheelRotateMotor.getCurrentPosition());
+            packet.put("integral", integral);
+            packet.put("pidOutput", pidOutput);
+            packet.put("totalOutput", totalOutput);
             FtcDashboard.getInstance().sendTelemetryPacket(packet);
 
 //                flywheelRotateMotor.setPower(pid.calculate(flywheelRotateMotor.getCurrentPosition(), setpoint));
@@ -395,3 +495,118 @@ public class TurretTestOP extends LinearOpMode{
         }
     }
 }
+
+class KalmanFilter1D {
+    private double Q;  // Process noise covariance
+    private double R;  // Measurement noise covariance
+    private double x;  // State estimate
+    private double P;  // Estimate covariance
+    private boolean initialized = false;
+
+    public KalmanFilter1D(double Q, double R) {
+        this.Q = Q;   // small
+        this.R = R;   // bigger
+    }
+
+    public double update(double measurement) {
+        if (!initialized) {
+            x = measurement;
+            P = 1;
+            initialized = true;
+            return x;
+        }
+
+        // Prediction step
+        P = P + Q;
+
+        // Kalman Gain
+        double K = P / (P + R);
+
+        // Update step
+        x = x + K * (measurement - x);
+
+        // Update covariance
+        P = (1 - K) * P;
+
+        return x;
+    }
+}
+
+//if (tag.ftcPose.yaw < -4 && flywheelRotateMotor.getCurrentPosition() > FLYWHEEL_ROTATE_MIN) {
+//    flywheelRotateMotor.setPower(-0.5);
+//}
+//else if (tag.ftcPose.yaw < 4 && flywheelRotateMotor.getCurrentPosition() > FLYWHEEL_ROTATE_MIN) {
+//    flywheelRotateMotor.setPower(-0.3);
+//}
+//else if (tag.ftcPose.yaw < 6.8 && flywheelRotateMotor.getCurrentPosition() > FLYWHEEL_ROTATE_MIN) {
+//    flywheelRotateMotor.setPower(-0.1);
+//}
+//if (tag.ftcPose.yaw < 7.8 && tag.ftcPose.yaw > 6.8) {
+//    flywheelRotateMotor.setPower(0);
+//}
+
+//AprilTagDetection tag = tagProcessor.getDetections().get(0);
+//double yaw = tag.ftcPose.yaw;   // yaw (left/right) of camera
+//double targetYaw = 0.0;         // want to be centered on tag
+//double error = yaw - targetYaw;
+//
+//integralSum += error * dt;
+//double derivative = (error - lastError) / dt;
+//double pidOutput =
+//        (error * PARAMS.kP) +
+//                (derivative * PARAMS.kD) +
+//                (integralSum * PARAMS.kI);
+//
+//                flywheelRotateMotor.setPower(-pidOutput);
+
+
+//
+//// angle of turret and robots
+//double TICKS_PER_REV_TURRET = 537.7;  // * 7.2?
+//double turretAngle = (flywheelRotateMotor.getCurrentPosition() / TICKS_PER_REV_TURRET) * 360.0;
+//angleDiff = turretAngle - robotAngle;
+//double actualTurretWorldAngle = turretAngle + robotAngle;
+//
+//robotAngle = odo.getHeading(AngleUnit.DEGREES);
+//double robotAngularVelocity = normDelta(robotAngle - lastRobotAngle) / timer.seconds();
+//lastRobotAngle = robotAngle;
+//
+//
+//AprilTagDetection tag = rawDetections.get(0);
+//double rawYaw = tag.ftcPose.yaw;
+//double filteredYaw = yawFilter.update(rawYaw);
+//// initialize filter on first frame
+//                if (!lpfInit) {
+//lpfYaw = filteredYaw;
+//lpfInit = true;
+//        }
+//
+//// Low-pass filter update
+//lpfYaw = lpfYaw + ALPHA * (filteredYaw - lpfYaw);
+//
+//// use filtered yaw
+//yaw = -lpfYaw;
+//targetYaw = 0.0;
+////                yawError = targetYaw - yaw;
+//double targetTurretWorldAngle = robotAngle + yaw;
+////                double targetWorldYaw = robotAngle - yaw;   // negative because tag yaw flips direction
+//error = normDelta(targetTurretWorldAngle - actualTurretWorldAngle);
+//
+//integralSum += error * timer.seconds();
+//double derivative = (error - lastError) / timer.seconds();
+//lastError = error;
+//
+//double actual_kD = PARAMS.kD;
+//
+//                if ((frontLeftMotor.getPower() > 0.3 && backLeftMotor.getPower() > 0.3) ||
+//        (frontRightMotor.getPower() > 0.3 && backRightMotor.getPower() > 0.3)) {
+//actual_kD *= 1.2;
+//        }
+//        telemetry.addData("actual kD", actual_kD);
+//
+//                timer.reset();
+//
+//pidOutput = (error * PARAMS.kP) + (derivative * actual_kD) + (integralSum * PARAMS.kI);
+//double turretFeedforward = -PARAMS.kF * robotAngularVelocity;
+//double finalOutput = pidOutput + turretFeedforward;
+//                flywheelRotateMotor.setPower(-finalOutput);
