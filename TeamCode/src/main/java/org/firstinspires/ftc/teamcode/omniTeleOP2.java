@@ -61,7 +61,7 @@ import java.util.List;
 @TeleOp @Config
 public class omniTeleOP2 extends LinearOpMode{
     int FLYWHEEL_ROTATE_MAX = 1200;
-    int FLYWHEEL_ROTATE_MIN = -1600;
+    int FLYWHEEL_ROTATE_MIN = -1550;
     boolean intakeToggle = false;
     double flywheelVelocitySet = 0;
     DcMotor frontLeftMotor; // 1
@@ -91,7 +91,7 @@ public class omniTeleOP2 extends LinearOpMode{
         public double kI = 0;
         public double kD = 0;
     }
-    public static TurretTestOP.Params PARAMS = new TurretTestOP.Params();
+    public static Params PARAMS = new Params();
     ElapsedTime timer = new ElapsedTime();
     private double lastError = 0;
     double error = 0;
@@ -214,7 +214,9 @@ public class omniTeleOP2 extends LinearOpMode{
                 imu.resetYaw();
                 odo.setHeading(0, AngleUnit.DEGREES);
                 // odo.setPosition(new Pose2d(0, 0, Math.toRadians(0)));
-                // odo.resetPosAndIMU();
+                odo.resetPosAndIMU();
+                flywheelRotateMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+                flywheelRotateMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
                 aimingToggle = true;
             }
 
@@ -374,11 +376,11 @@ public class omniTeleOP2 extends LinearOpMode{
                     CORNER_ANGLE = Math.atan2(72 + robotPos.getY(DistanceUnit.INCH), 72 - robotPos.getX(DistanceUnit.INCH));
                 }
                 else {
-                    CORNER_ANGLE = Math.atan2(72 + robotPos.getY(DistanceUnit.INCH), 72 + robotPos.getX(DistanceUnit.INCH));
+                    CORNER_ANGLE = Math.PI - Math.atan2(72 + robotPos.getY(DistanceUnit.INCH), 72 + robotPos.getX(DistanceUnit.INCH));
                 }
 
                 error = cameraHeading - CORNER_ANGLE;
-                double OFFSET_ANGLE = -0.06;
+                double OFFSET_ANGLE = -0.071;
                 error += OFFSET_ANGLE;
 
                 integral += error * dt;
@@ -401,6 +403,26 @@ public class omniTeleOP2 extends LinearOpMode{
                     totalOutput = -totalOutput;
                 }
                 flywheelRotateMotor.setPower(-totalOutput);
+
+                TelemetryPacket packet = new TelemetryPacket();
+                packet.put("error", error);
+                packet.put("kP", PARAMS.kP);
+                packet.put("kI", PARAMS.kI);
+                packet.put("kD", PARAMS.kD);
+                packet.put("kF", PARAMS.kD);
+                packet.put("turret angle", turretAngle);
+                packet.put("robot angle", robotHeading);
+                packet.put("camera heading", cameraHeading);
+                packet.put("robot position x", robotPos.getX(DistanceUnit.INCH));
+                packet.put("robot position y", robotPos.getY(DistanceUnit.INCH));
+                packet.put("corner angle", CORNER_ANGLE);
+                packet.put("flywheel max angle", flywheelMaxAngle);
+                packet.put("flywheel min angle", flywheelMinAngle);
+                packet.put("turretPos", flywheelRotateMotor.getCurrentPosition());
+                packet.put("integral", integral);
+                packet.put("pidOutput", pidOutput);
+                packet.put("totalOutput", totalOutput);
+                FtcDashboard.getInstance().sendTelemetryPacket(packet);
             }
             else {
                 if ((gamepad1.left_trigger > 0.1 || gamepad2.left_trigger > 0.1)
@@ -425,27 +447,8 @@ public class omniTeleOP2 extends LinearOpMode{
 
             telemetry.addData("flyweelRotate: ", flywheelRotateMotor.getPower());
             telemetry.addData("aimingToggle:", aimingToggle);
-
-            TelemetryPacket packet = new TelemetryPacket();
-            packet.put("error", error);
-            packet.put("kP", PARAMS.kP);
-            packet.put("kI", PARAMS.kI);
-            packet.put("kD", PARAMS.kD);
-            packet.put("kF", PARAMS.kD);
-            packet.put("turret angle", turretAngle);
-            packet.put("robot angle", robotHeading);
-            packet.put("camera heading", cameraHeading);
-            packet.put("robot position x", robotPos.getX(DistanceUnit.INCH));
-            packet.put("robot position y", robotPos.getY(DistanceUnit.INCH));
-            packet.put("corner angle", CORNER_ANGLE);
-            packet.put("flywheel max angle", flywheelMaxAngle);
-            packet.put("flywheel min angle", flywheelMinAngle);
-            packet.put("turretPos", flywheelRotateMotor.getCurrentPosition());
-            packet.put("integral", integral);
-            packet.put("pidOutput", pidOutput);
-            packet.put("totalOutput", totalOutput);
-            FtcDashboard.getInstance().sendTelemetryPacket(packet);
-
+            telemetry.addData("blueSideToggle: ", blueSideToggle);
+//            telemetry.addData("Corner angle: ", CORNER_ANGLE);
             telemetry.addData("rmp flywheel: ", flywheelMotor.getPower());
             telemetry.update();
         }
