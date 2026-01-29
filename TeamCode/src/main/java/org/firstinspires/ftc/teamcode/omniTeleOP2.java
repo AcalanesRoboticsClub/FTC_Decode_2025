@@ -61,7 +61,7 @@ import java.util.List;
 @TeleOp @Config
 public class omniTeleOP2 extends LinearOpMode{
     int FLYWHEEL_ROTATE_MAX = 1200;
-    int FLYWHEEL_ROTATE_MIN = -1550;
+    int FLYWHEEL_ROTATE_MIN = -2000;
     boolean intakeToggle = false;
     double flywheelVelocitySet = 0;
     DcMotor frontLeftMotor; // 1
