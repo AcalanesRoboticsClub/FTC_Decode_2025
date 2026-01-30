@@ -380,10 +380,10 @@ public class omniTeleOP2 extends LinearOpMode{
                 cameraHeading = robotHeading + turretAngle;
                 CORNER_ANGLE = 0.0;
                 if (blueSideToggle) {
-                    CORNER_ANGLE = Math.atan2(72 + robotPos.getY(DistanceUnit.INCH), 72 - robotPos.getX(DistanceUnit.INCH));
+                    CORNER_ANGLE = Math.atan2(60 + robotPos.getY(DistanceUnit.INCH), 60 - robotPos.getX(DistanceUnit.INCH));
                 }
                 else {
-                    CORNER_ANGLE = Math.PI - Math.atan2(72 + robotPos.getY(DistanceUnit.INCH), 72 + robotPos.getX(DistanceUnit.INCH));
+                    CORNER_ANGLE = Math.PI - Math.atan2(60 + robotPos.getY(DistanceUnit.INCH), 60 + robotPos.getX(DistanceUnit.INCH));
                 }
 
                 error = cameraHeading - CORNER_ANGLE;
