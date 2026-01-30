@@ -60,8 +60,8 @@ import java.util.List;
 
 @TeleOp @Config
 public class omniTeleOP2 extends LinearOpMode{
-    int FLYWHEEL_ROTATE_MAX = 1200;
-    int FLYWHEEL_ROTATE_MIN = -2000;
+    int FLYWHEEL_ROTATE_MAX = 1100;
+    int FLYWHEEL_ROTATE_MIN = -1900;
     boolean intakeToggle = false;
     double flywheelVelocitySet = 0;
     DcMotor frontLeftMotor; // 1
@@ -213,7 +213,7 @@ public class omniTeleOP2 extends LinearOpMode{
                 imu.initialize(parameters);
                 imu.resetYaw();
                 odo.setHeading(0, AngleUnit.DEGREES);
-                // odo.setPosition(new Pose2d(0, 0, Math.toRadians(0)));
+                odo.setPosition(new Pose2D(DistanceUnit.INCH, 0, 0, AngleUnit.DEGREES, Math.toRadians(0)));
                 odo.resetPosAndIMU();
                 flywheelRotateMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
                 flywheelRotateMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -387,7 +387,7 @@ public class omniTeleOP2 extends LinearOpMode{
                 }
 
                 error = cameraHeading - CORNER_ANGLE;
-                double OFFSET_ANGLE = -0.055;
+                double OFFSET_ANGLE = -0.042; // negative is right, -0.055
                 error += OFFSET_ANGLE;
 
                 integral += error * dt;
@@ -401,6 +401,13 @@ public class omniTeleOP2 extends LinearOpMode{
                 totalOutput = 0;
                 flywheelMaxAngle = FLYWHEEL_ROTATE_MAX / TURRET_TPR * Math.PI / 23;
                 flywheelMinAngle = FLYWHEEL_ROTATE_MIN / TURRET_TPR * Math.PI / 23;
+
+                if(!blueSideToggle)
+                {
+                    flywheelMaxAngle = -FLYWHEEL_ROTATE_MIN / TURRET_TPR * Math.PI / 23;
+                    flywheelMinAngle = -FLYWHEEL_ROTATE_MAX / TURRET_TPR * Math.PI / 23;
+
+                }
                 if (CORNER_ANGLE <= 0) {
                     totalOutput = -pidOutput;
                 } else if (CORNER_ANGLE > 0) {
