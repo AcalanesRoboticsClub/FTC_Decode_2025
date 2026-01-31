@@ -209,11 +209,11 @@ public class omniTeleOP2 extends LinearOpMode{
             // This button choice was made so that it is hard to hit on accident,
             // it can be freely changed based on preference.
             // The equivalent button is start on Xbox-style controllers.
-            if (gamepad1.options) {
+            if (gamepad1.optionsWasPressed()) {
                 imu.initialize(parameters);
                 imu.resetYaw();
-                odo.setHeading(0, AngleUnit.DEGREES);
-                odo.setPosition(new Pose2D(DistanceUnit.INCH, 0, 0, AngleUnit.DEGREES, Math.toRadians(0)));
+                //odo.setHeading(0, AngleUnit.DEGREES);
+                //odo.setPosition(new Pose2D(DistanceUnit.INCH, 0, 0, AngleUnit.DEGREES, Math.toRadians(0)));
                 odo.resetPosAndIMU();
                 flywheelRotateMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
                 flywheelRotateMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
@@ -387,14 +387,14 @@ public class omniTeleOP2 extends LinearOpMode{
                 }
 
                 error = cameraHeading - CORNER_ANGLE;
-                double OFFSET_ANGLE = 0.0;
+                double OFFSET_ANGLE;
                 if (robotPos.getX(DistanceUnit.INCH) < 5) {
                     OFFSET_ANGLE = -0.038; // negative is right, -0.055
                 }
                 else {
                     OFFSET_ANGLE = -0.042; // negative is right, -0.055
                 }
-                error += OFFSET_ANGLE;
+                //error += OFFSET_ANGLE;
 
                 integral += error * dt;
                 double derivative = (error - lastError) / dt;
@@ -402,7 +402,7 @@ public class omniTeleOP2 extends LinearOpMode{
 
                 pidOutput = PARAMS.kP * error +
                         PARAMS.kI * integral +
-                        PARAMS.kD * derivative;
+                        PARAMS.kD * derivative + OFFSET_ANGLE;
 
                 totalOutput = 0;
                 flywheelMaxAngle = FLYWHEEL_ROTATE_MAX / TURRET_TPR * Math.PI / 23;
