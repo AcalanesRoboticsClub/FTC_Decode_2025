@@ -60,8 +60,8 @@ import java.util.List;
 
 @TeleOp @Config
 public class omniTeleOP2 extends LinearOpMode{
-    int FLYWHEEL_ROTATE_MAX = 1100;
-    int FLYWHEEL_ROTATE_MIN = -1900;
+    int FLYWHEEL_ROTATE_MAX = 1200;
+    int FLYWHEEL_ROTATE_MIN = -1550;
     boolean intakeToggle = false;
     double flywheelVelocitySet = 0;
     DcMotor frontLeftMotor; // 1
@@ -212,8 +212,8 @@ public class omniTeleOP2 extends LinearOpMode{
             if (gamepad1.optionsWasPressed()) {
                 imu.initialize(parameters);
                 imu.resetYaw();
-                //odo.setHeading(0, AngleUnit.DEGREES);
-                //odo.setPosition(new Pose2D(DistanceUnit.INCH, 0, 0, AngleUnit.DEGREES, Math.toRadians(0)));
+                odo.setHeading(0, AngleUnit.DEGREES);
+                // odo.setPosition(new Pose2d(0, 0, Math.toRadians(0)));
                 odo.resetPosAndIMU();
                 flywheelRotateMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
                 flywheelRotateMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
