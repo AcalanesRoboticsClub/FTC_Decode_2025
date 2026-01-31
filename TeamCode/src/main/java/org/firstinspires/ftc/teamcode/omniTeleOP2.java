@@ -209,7 +209,7 @@ public class omniTeleOP2 extends LinearOpMode{
             // This button choice was made so that it is hard to hit on accident,
             // it can be freely changed based on preference.
             // The equivalent button is start on Xbox-style controllers.
-            if (gamepad1.options) {
+            if (gamepad1.optionsWasPressed()) {
                 imu.initialize(parameters);
                 imu.resetYaw();
                 odo.setHeading(0, AngleUnit.DEGREES);
@@ -231,11 +231,18 @@ public class omniTeleOP2 extends LinearOpMode{
             double rx = expo(calcLargestChange(gamepad1.right_stick_x, gamepad2.right_stick_x), turnExpo);
 
             // ===== Field-centric math =====
-            double botHeading = -odo.getHeading(AngleUnit.RADIANS);
+
+            double botHeading = odo.getHeading(AngleUnit.RADIANS);
+
+            // Alliance-based field flip
+            double fieldOffset = blueSideToggle ? 0.0 : Math.PI;
+
+            // IMPORTANT: negate heading for inverse rotation
+            double effectiveHeading = -(botHeading - fieldOffset);
 
             // Rotate the movement direction counter to the bot's rotation
-            double rotX = x * Math.cos(botHeading) - y * Math.sin(botHeading);
-            double rotY = x * Math.sin(botHeading) + y * Math.cos(botHeading);
+            double rotX = x * Math.cos(effectiveHeading) - y * Math.sin(effectiveHeading);
+            double rotY = x * Math.sin(effectiveHeading) + y * Math.cos(effectiveHeading);
 
             rotX *= 1.1;  // Counteract imperfect strafing
 
@@ -321,11 +328,11 @@ public class omniTeleOP2 extends LinearOpMode{
 
             if (gamepad1.dpad_up || gamepad2.dpad_up) { // CLOSEST (touching wall)
                 angle = 0;
-                flywheelVelocitySet = 1280; // 1500
+                flywheelVelocitySet = 1260; // 1500
             }
             if (gamepad1.dpad_left || gamepad2.dpad_left) { // CLOSE (centered on closer triangle)
                 angle = 0.26;
-                flywheelVelocitySet = 1350; // 1800
+                flywheelVelocitySet = 1375; // 1800
             }
             if (gamepad1.dpad_down || gamepad2.dpad_down) { // FAR (centered on top of triangle)
                 angle = 0.23;
@@ -373,15 +380,21 @@ public class omniTeleOP2 extends LinearOpMode{
                 cameraHeading = robotHeading + turretAngle;
                 CORNER_ANGLE = 0.0;
                 if (blueSideToggle) {
-                    CORNER_ANGLE = Math.atan2(72 + robotPos.getY(DistanceUnit.INCH), 72 - robotPos.getX(DistanceUnit.INCH));
+                    CORNER_ANGLE = Math.atan2(64 + robotPos.getY(DistanceUnit.INCH), 60 - robotPos.getX(DistanceUnit.INCH));
                 }
                 else {
-                    CORNER_ANGLE = Math.PI - Math.atan2(72 + robotPos.getY(DistanceUnit.INCH), 72 + robotPos.getX(DistanceUnit.INCH));
+                    CORNER_ANGLE = Math.PI - Math.atan2(64 + robotPos.getY(DistanceUnit.INCH), 60 + robotPos.getX(DistanceUnit.INCH));
                 }
 
                 error = cameraHeading - CORNER_ANGLE;
-                double OFFSET_ANGLE = -0.071;
-                error += OFFSET_ANGLE;
+                double OFFSET_ANGLE;
+                if (robotPos.getX(DistanceUnit.INCH) < 5) {
+                    OFFSET_ANGLE = -0.038; // negative is right, -0.055
+                }
+                else {
+                    OFFSET_ANGLE = -0.042; // negative is right, -0.055
+                }
+                //error += OFFSET_ANGLE;
 
                 integral += error * dt;
                 double derivative = (error - lastError) / dt;
@@ -389,20 +402,42 @@ public class omniTeleOP2 extends LinearOpMode{
 
                 pidOutput = PARAMS.kP * error +
                         PARAMS.kI * integral +
-                        PARAMS.kD * derivative;
+                        PARAMS.kD * derivative + OFFSET_ANGLE;
 
                 totalOutput = 0;
                 flywheelMaxAngle = FLYWHEEL_ROTATE_MAX / TURRET_TPR * Math.PI / 23;
                 flywheelMinAngle = FLYWHEEL_ROTATE_MIN / TURRET_TPR * Math.PI / 23;
+
+                if(!blueSideToggle)
+                {
+                    flywheelMaxAngle = -FLYWHEEL_ROTATE_MIN / TURRET_TPR * Math.PI / 23;
+                    flywheelMinAngle = -FLYWHEEL_ROTATE_MAX / TURRET_TPR * Math.PI / 23;
+
+                }
                 if (CORNER_ANGLE <= 0) {
                     totalOutput = -pidOutput;
                 } else if (CORNER_ANGLE > 0) {
                     totalOutput = pidOutput;
                 }
-                if ((totalOutput < 0 && cameraHeading + error < flywheelMinAngle) && (totalOutput > 0 && cameraHeading + error > flywheelMaxAngle)) {
-                    totalOutput = -totalOutput;
+                if (blueSideToggle) {
+                    if ((totalOutput < 0 && cameraHeading + error < flywheelMinAngle) && (totalOutput > 0 && cameraHeading + error > flywheelMaxAngle)) {
+                        totalOutput = -totalOutput;
+                    }
                 }
-                flywheelRotateMotor.setPower(-totalOutput);
+                else {
+                    if ((totalOutput < 0 && cameraHeading + error < -flywheelMaxAngle) && (totalOutput > 0 && cameraHeading + error > -flywheelMinAngle)) {
+                        totalOutput = -totalOutput;
+                    }
+                }
+
+                if (Math.abs(totalOutput) < 0.13) {
+                    totalOutput = 0;
+                    flywheelRotateMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+                    flywheelRotateMotor.setPower(0);
+                }
+                else {
+                    flywheelRotateMotor.setPower(-totalOutput);
+                }
 
                 TelemetryPacket packet = new TelemetryPacket();
                 packet.put("error", error);
