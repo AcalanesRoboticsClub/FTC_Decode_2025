@@ -328,11 +328,11 @@ public class omniTeleOP2 extends LinearOpMode{
 
             if (gamepad1.dpad_up || gamepad2.dpad_up) { // CLOSEST (touching wall)
                 angle = 0;
-                flywheelVelocitySet = 1280; // 1500
+                flywheelVelocitySet = 1260; // 1500
             }
             if (gamepad1.dpad_left || gamepad2.dpad_left) { // CLOSE (centered on closer triangle)
                 angle = 0.26;
-                flywheelVelocitySet = 1350; // 1800
+                flywheelVelocitySet = 1375; // 1800
             }
             if (gamepad1.dpad_down || gamepad2.dpad_down) { // FAR (centered on top of triangle)
                 angle = 0.23;
@@ -380,14 +380,20 @@ public class omniTeleOP2 extends LinearOpMode{
                 cameraHeading = robotHeading + turretAngle;
                 CORNER_ANGLE = 0.0;
                 if (blueSideToggle) {
-                    CORNER_ANGLE = Math.atan2(60 + robotPos.getY(DistanceUnit.INCH), 60 - robotPos.getX(DistanceUnit.INCH));
+                    CORNER_ANGLE = Math.atan2(64 + robotPos.getY(DistanceUnit.INCH), 60 - robotPos.getX(DistanceUnit.INCH));
                 }
                 else {
-                    CORNER_ANGLE = Math.PI - Math.atan2(60 + robotPos.getY(DistanceUnit.INCH), 60 + robotPos.getX(DistanceUnit.INCH));
+                    CORNER_ANGLE = Math.PI - Math.atan2(64 + robotPos.getY(DistanceUnit.INCH), 60 + robotPos.getX(DistanceUnit.INCH));
                 }
 
                 error = cameraHeading - CORNER_ANGLE;
-                double OFFSET_ANGLE = -0.042; // negative is right, -0.055
+                double OFFSET_ANGLE = 0.0;
+                if (robotPos.getX(DistanceUnit.INCH) < 5) {
+                    OFFSET_ANGLE = -0.038; // negative is right, -0.055
+                }
+                else {
+                    OFFSET_ANGLE = -0.042; // negative is right, -0.055
+                }
                 error += OFFSET_ANGLE;
 
                 integral += error * dt;
@@ -413,8 +419,15 @@ public class omniTeleOP2 extends LinearOpMode{
                 } else if (CORNER_ANGLE > 0) {
                     totalOutput = pidOutput;
                 }
-                if ((totalOutput < 0 && cameraHeading + error < flywheelMinAngle) && (totalOutput > 0 && cameraHeading + error > flywheelMaxAngle)) {
-                    totalOutput = -totalOutput;
+                if (blueSideToggle) {
+                    if ((totalOutput < 0 && cameraHeading + error < flywheelMinAngle) && (totalOutput > 0 && cameraHeading + error > flywheelMaxAngle)) {
+                        totalOutput = -totalOutput;
+                    }
+                }
+                else {
+                    if ((totalOutput < 0 && cameraHeading + error < -flywheelMaxAngle) && (totalOutput > 0 && cameraHeading + error > -flywheelMinAngle)) {
+                        totalOutput = -totalOutput;
+                    }
                 }
                 flywheelRotateMotor.setPower(-totalOutput);
 

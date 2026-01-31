@@ -155,7 +155,7 @@ public class odo6BallFarRed extends LinearOpMode {
                     drive.actionBuilder(drive.localizer.getPose())
                             .lineToYConstantHeading(20)
                             .setReversed(true) // make the spline more sensible
-                            .splineTo(new Vector2d(64, 5), Math.toRadians(180)) // starting location
+                            .splineTo(new Vector2d(64, 5), Math.toRadians(0)) // starting location
                             .build());
 
             shootThree();
@@ -166,7 +166,7 @@ public class odo6BallFarRed extends LinearOpMode {
             Actions.runBlocking(
                     drive.actionBuilder(drive.localizer.getPose())
                             .setReversed(false)
-                            .splineTo(new Vector2d(34, 20), Math.toRadians(90)) // curve toward close artifact row
+                            .splineTo(new Vector2d(34, 20), Math.toRadians(270)) // curve toward close artifact row
                             .build());
 
             StopAll();
