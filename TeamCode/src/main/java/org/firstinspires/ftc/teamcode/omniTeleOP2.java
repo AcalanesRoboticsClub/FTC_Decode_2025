@@ -429,7 +429,15 @@ public class omniTeleOP2 extends LinearOpMode{
                         totalOutput = -totalOutput;
                     }
                 }
-                flywheelRotateMotor.setPower(-totalOutput);
+
+                if (Math.abs(totalOutput) < 0.13) {
+                    totalOutput = 0;
+                    flywheelRotateMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+                    flywheelRotateMotor.setPower(0);
+                }
+                else {
+                    flywheelRotateMotor.setPower(-totalOutput);
+                }
 
                 TelemetryPacket packet = new TelemetryPacket();
                 packet.put("error", error);
