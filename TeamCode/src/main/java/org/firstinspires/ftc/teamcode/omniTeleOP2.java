@@ -100,10 +100,16 @@ public class omniTeleOP2 extends LinearOpMode{
     double cameraHeading;
     double CORNER_ANGLE;
     double integral = 0;
+    double OFFSET_ANGLE;
+    double human_adjustment = 0;
     double pidOutput = 0.0;
     double totalOutput;
     double flywheelMaxAngle;
     double flywheelMinAngle;
+    double previousRTVal = 0.0;
+    double previousLTVal = 0.0;
+    double TRIGGER_THRESHOLD = 0.2;
+
     FtcDashboard dashboard = FtcDashboard.getInstance();
 
     private double calcLargestChange(double a, double b) {
@@ -163,7 +169,7 @@ public class omniTeleOP2 extends LinearOpMode{
         flywheelRotateMotor = hardwareMap.dcMotor.get("rotatShot");
         flywheelRotateMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         flywheelRotateMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        flywheelRotateMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        flywheelRotateMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
         flywheelMotor = hardwareMap.get(DcMotorEx.class, "flywheelMotor");
         flywheelMotor.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
         flywheelIntake = hardwareMap.dcMotor.get("flywheelIntake");
@@ -218,6 +224,7 @@ public class omniTeleOP2 extends LinearOpMode{
                 flywheelRotateMotor.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
                 flywheelRotateMotor.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
                 aimingToggle = true;
+                human_adjustment = 0;
             }
 
             // ===== Adjustable expo values =====
@@ -387,13 +394,16 @@ public class omniTeleOP2 extends LinearOpMode{
                 }
 
                 error = cameraHeading - CORNER_ANGLE;
-                double OFFSET_ANGLE;
                 if (robotPos.getX(DistanceUnit.INCH) < 5) {
                     OFFSET_ANGLE = -0.038; // negative is right, -0.055
                 }
+//                if (robotPos.getY(DistanceUnit.INCH) > 20) {
+//                    OFFSET_ANGLE = -0.038; // negative is right, -0.055
+//                }
                 else {
                     OFFSET_ANGLE = -0.042; // negative is right, -0.055
                 }
+                OFFSET_ANGLE += human_adjustment;
                 //error += OFFSET_ANGLE;
 
                 integral += error * dt;
@@ -419,25 +429,28 @@ public class omniTeleOP2 extends LinearOpMode{
                 } else if (CORNER_ANGLE > 0) {
                     totalOutput = pidOutput;
                 }
-                if (blueSideToggle) {
-                    if ((totalOutput < 0 && cameraHeading + error < flywheelMinAngle) && (totalOutput > 0 && cameraHeading + error > flywheelMaxAngle)) {
-                        totalOutput = -totalOutput;
-                    }
-                }
-                else {
-                    if ((totalOutput < 0 && cameraHeading + error < -flywheelMaxAngle) && (totalOutput > 0 && cameraHeading + error > -flywheelMinAngle)) {
-                        totalOutput = -totalOutput;
-                    }
+                if ((totalOutput < 0 && cameraHeading + error < flywheelMinAngle) && (totalOutput > 0 && cameraHeading + error > flywheelMaxAngle)) {
+                    totalOutput = -totalOutput;
                 }
 
                 if (Math.abs(totalOutput) < 0.13) {
                     totalOutput = 0;
-                    flywheelRotateMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+                    flywheelRotateMotor.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
                     flywheelRotateMotor.setPower(0);
                 }
                 else {
                     flywheelRotateMotor.setPower(-totalOutput);
                 }
+
+                // Changing offset angle using RT and RL
+                if ((gamepad1.right_trigger > TRIGGER_THRESHOLD || gamepad2.right_trigger > TRIGGER_THRESHOLD) && !(previousRTVal > TRIGGER_THRESHOLD)) {
+                    human_adjustment += 0.05;
+                }
+                if ((gamepad1.left_trigger > TRIGGER_THRESHOLD || gamepad2.left_trigger > TRIGGER_THRESHOLD) && !(previousLTVal > TRIGGER_THRESHOLD)) {
+                    human_adjustment -= 0.05;
+                }
+                previousRTVal = gamepad1.right_trigger;
+                previousLTVal = gamepad1.left_trigger;
 
                 TelemetryPacket packet = new TelemetryPacket();
                 packet.put("error", error);
@@ -480,6 +493,7 @@ public class omniTeleOP2 extends LinearOpMode{
                 }
             }
 
+            telemetry.addData("OFFSET: ", OFFSET_ANGLE);
             telemetry.addData("flyweelRotate: ", flywheelRotateMotor.getPower());
             telemetry.addData("aimingToggle:", aimingToggle);
             telemetry.addData("blueSideToggle: ", blueSideToggle);
