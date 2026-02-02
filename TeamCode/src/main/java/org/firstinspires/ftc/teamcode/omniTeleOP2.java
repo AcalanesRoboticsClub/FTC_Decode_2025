@@ -444,10 +444,10 @@ public class omniTeleOP2 extends LinearOpMode{
 
                 // Changing offset angle using RT and RL
                 if ((gamepad1.right_trigger > TRIGGER_THRESHOLD || gamepad2.right_trigger > TRIGGER_THRESHOLD) && !(previousRTVal > TRIGGER_THRESHOLD)) {
-                    human_adjustment += 0.05;
+                    human_adjustment += 0.07;
                 }
                 if ((gamepad1.left_trigger > TRIGGER_THRESHOLD || gamepad2.left_trigger > TRIGGER_THRESHOLD) && !(previousLTVal > TRIGGER_THRESHOLD)) {
-                    human_adjustment -= 0.05;
+                    human_adjustment -= 0.07;
                 }
                 previousRTVal = gamepad1.right_trigger;
                 previousLTVal = gamepad1.left_trigger;
